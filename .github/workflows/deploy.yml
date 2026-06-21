@@ -3,14 +3,16 @@ name: Deploy to Cloudflare
 # Git is the single source of truth and the only deploy trigger.
 # Path-scoped (mirrors the flowsmith repo): a `changes` job classifies the push
 # with dorny/paths-filter; each deploy job runs only when its area changed.
-#   apps/www/**   → Pages project  (TODO: create + name, e.g. kh-www)  → kh.group
-#   apps/stox/**  → Worker         (TODO: name, e.g. kh-stox)          → stox.kh.group
+#   apps/www/**   → CF Pages  `kh-www`   → kh.group        (project auto-created on first deploy)
+#   apps/stox/**  → CF Worker `kh-stox`  → stox.kh.group   (once apps/stox has a wrangler.toml)
 # A push under root/docs/packages deploys nothing. workflow_dispatch forces all.
 #
-# One-time setup (see flowsmith DEPLOY.md for the pattern):
-#   - GitHub secret CLOUDFLARE_API_TOKEN (org-level covers all repos)
-#   - GitHub secret CLOUDFLARE_ACCOUNT_ID = e23e7f2a089411193e86a3f444cf0954  (verify)
-#   - create the Pages project + the Worker, attach custom domains.
+# One-time setup — add ONE GitHub repo secret on KamilHrbacek/kh
+# (Settings → Secrets and variables → Actions → New repository secret):
+#   - CLOUDFLARE_API_TOKEN = a Cloudflare API token with: Account · Cloudflare Pages:Edit,
+#     Account · Workers Scripts:Edit, Zone · kh.group · Workers Routes:Edit.
+# The account id is not secret and is baked in below. The custom domain kh.group is
+# attached separately (NOT here) and never touches kh-group.eu email/MX.
 
 on:
   push:
@@ -49,12 +51,16 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      # TODO: enable once the Pages project exists.
-      - name: wrangler pages deploy (TODO)
-        run: echo "TODO: npx wrangler@4 pages deploy apps/www --project-name=<kh-www> --branch=main"
-        # env:
-        #   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        #   CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Create Pages project if missing (idempotent)
+        run: npx wrangler@4 pages project create kh-www --production-branch=main 2>/dev/null || true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: e23e7f2a089411193e86a3f444cf0954
+      - name: wrangler pages deploy
+        run: npx wrangler@4 pages deploy apps/www --project-name=kh-www --branch=main
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: e23e7f2a089411193e86a3f444cf0954
 
   stox:
     name: Deploy stox (Worker)
@@ -66,10 +72,14 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-      # TODO: enable once apps/stox has a wrangler.toml (name = "kh-stox").
-      - name: wrangler deploy (TODO)
+      - name: wrangler deploy (skips until apps/stox/wrangler.toml exists)
         working-directory: apps/stox
-        run: echo "TODO: npx wrangler deploy (needs apps/stox/wrangler.toml)"
-        # env:
-        #   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        #   CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -f wrangler.toml ]; then
+            npx wrangler deploy
+          else
+            echo "apps/stox has no wrangler.toml yet — nothing to deploy, skipping."
+          fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: e23e7f2a089411193e86a3f444cf0954
