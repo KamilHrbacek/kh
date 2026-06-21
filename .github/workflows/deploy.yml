@@ -1,0 +1,75 @@
+name: Deploy to Cloudflare
+
+# Git is the single source of truth and the only deploy trigger.
+# Path-scoped (mirrors the flowsmith repo): a `changes` job classifies the push
+# with dorny/paths-filter; each deploy job runs only when its area changed.
+#   apps/www/**   → Pages project  (TODO: create + name, e.g. kh-www)  → kh.group
+#   apps/stox/**  → Worker         (TODO: name, e.g. kh-stox)          → stox.kh.group
+# A push under root/docs/packages deploys nothing. workflow_dispatch forces all.
+#
+# One-time setup (see flowsmith DEPLOY.md for the pattern):
+#   - GitHub secret CLOUDFLARE_API_TOKEN (org-level covers all repos)
+#   - GitHub secret CLOUDFLARE_ACCOUNT_ID = e23e7f2a089411193e86a3f444cf0954  (verify)
+#   - create the Pages project + the Worker, attach custom domains.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  changes:
+    name: Detect changed areas
+    runs-on: ubuntu-latest
+    outputs:
+      www: ${{ steps.filter.outputs.www }}
+      stox: ${{ steps.filter.outputs.stox }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            www:
+              - 'apps/www/**'
+            stox:
+              - 'apps/stox/**'
+
+  www:
+    name: Deploy website (Pages)
+    needs: changes
+    if: ${{ needs.changes.outputs.www == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      # TODO: enable once the Pages project exists.
+      - name: wrangler pages deploy (TODO)
+        run: echo "TODO: npx wrangler@4 pages deploy apps/www --project-name=<kh-www> --branch=main"
+        # env:
+        #   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        #   CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+  stox:
+    name: Deploy stox (Worker)
+    needs: changes
+    if: ${{ needs.changes.outputs.stox == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      # TODO: enable once apps/stox has a wrangler.toml (name = "kh-stox").
+      - name: wrangler deploy (TODO)
+        working-directory: apps/stox
+        run: echo "TODO: npx wrangler deploy (needs apps/stox/wrangler.toml)"
+        # env:
+        #   CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        #   CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

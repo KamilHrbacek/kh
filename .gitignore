@@ -1,0 +1,7 @@
+.DS_Store
+node_modules/
+*.log
+.wrangler/
+.dev.vars
+# local secrets for cowork push — never commit
+.kh-secrets/
