@@ -1,0 +1,15 @@
+# KH Group
+
+> KH Group — průmyslové portfolio se zaměřením na výrobu, technologie a nemovitosti.
+
+## What this is
+
+- **Type**: Industrial group portfolio site
+- **Owner**: Kamil Hrbáček
+- **Current status**: Migrated from Webflow Starter (Dec 2023 last published) to Cloudflare Pages (May 2026)
+- **Language**: Czech
+
+## Key pages
+
+- [Homepage](https://kh-group.eu/): single-page site.
+- [Sitemap](https://kh-group.eu/sitemap.xml)

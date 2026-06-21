@@ -1,0 +1,12 @@
+{
+  "name": "KH Group",
+  "short_name": "KH",
+  "description": "KH Group — průmyslové portfolio se zaměřením na výrobu, technologie a nemovitosti.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "lang": "cs",
+  "dir": "ltr"
+}
