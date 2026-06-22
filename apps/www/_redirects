@@ -1,2 +1,0 @@
-# Canonical host: apex (kh-group.eu). Everything on www → 301 → apex.
-https://www.kh-group.eu/*  https://kh-group.eu/:splat  301!
