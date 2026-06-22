@@ -149,6 +149,10 @@ body.navopen .brand .m path{fill:var(--paper);}
 .loccol .locc{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;}
 .locr{display:grid;grid-template-columns:1fr auto auto;gap:14px;font-family:'DM Mono',monospace;font-size:12.5px;color:var(--ink);opacity:.8;padding:5px 0;border-bottom:1px solid var(--line);}
 .locr span:nth-child(2),.locr span:nth-child(3){color:var(--mute);}
+/* addresses are hidden links → Google Maps (new tab); reveal on hover like the other links */
+.locr{transition:color .3s cubic-bezier(.4,0,.2,1),border-color .3s;cursor:pointer;}
+.locr:hover,.locr:hover span{color:var(--accent);}
+.locr:hover{border-color:var(--accent);}
 
 .foot{border-top:1px solid var(--line);padding:24px 0;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);}
 .foot-legal a{cursor:pointer;transition:color .25s;}
@@ -184,6 +188,9 @@ body.navopen .brand .m path{fill:var(--paper);}
      negative margins cancel the .wrap band padding above. */
   .worldmap{margin-left:calc(-1 * (var(--g) + 46px));margin-right:calc(-1 * (var(--g) + 30px));}
   .locgrid{grid-template-columns:1fr;gap:22px;}
+  /* stack each address like a real postal address: street on line 1, "PSČ City" on line 2 */
+  .locr{grid-template-columns:max-content 1fr;gap:2px 10px;}
+  .locr span:first-child{grid-column:1/-1;}
   .sec-head{padding:120px 0 32px;}
   .cgrid,.bmlink{padding-bottom:90px;}
 }
@@ -320,15 +327,15 @@ body.navopen .brand .m path{fill:var(--paper);}
       <div class="locgrid">
         <div class="loccol">
           <div class="locc">Prague</div>
-          <div class="locr"><span>Vodičkova 710/31</span><span>110 00</span><span>Praha 1</span></div>
-          <div class="locr"><span>Jeseniova 22 a 26</span><span>130 00</span><span>Praha 3</span></div>
-          <div class="locr"><span>Střížkovská 630/112</span><span>190 00</span><span>Praha 9</span></div>
-          <div class="locr"><span>Střelničná 773/51</span><span>180 00</span><span>Praha 8</span></div>
-          <div class="locr"><span>U vysočanského pivovaru 701/3</span><span>190 00</span><span>Praha 9</span></div>
+          <a class="locr" href="https://www.google.com/maps/search/?api=1&amp;query=Vodi%C4%8Dkova%20710/31%2C%20110%2000%20Praha%201%2C%20Czech%20Republic" target="_blank" rel="noopener"><span>Vodičkova 710/31</span><span>110 00</span><span>Praha 1</span></a>
+          <a class="locr" href="https://www.google.com/maps/search/?api=1&amp;query=Jeseniova%2022%20a%2026%2C%20130%2000%20Praha%203%2C%20Czech%20Republic" target="_blank" rel="noopener"><span>Jeseniova 22 a 26</span><span>130 00</span><span>Praha 3</span></a>
+          <a class="locr" href="https://www.google.com/maps/search/?api=1&amp;query=St%C5%99%C3%AD%C5%BEkovsk%C3%A1%20630/112%2C%20190%2000%20Praha%209%2C%20Czech%20Republic" target="_blank" rel="noopener"><span>Střížkovská 630/112</span><span>190 00</span><span>Praha 9</span></a>
+          <a class="locr" href="https://www.google.com/maps/search/?api=1&amp;query=St%C5%99elni%C4%8Dn%C3%A1%20773/51%2C%20180%2000%20Praha%208%2C%20Czech%20Republic" target="_blank" rel="noopener"><span>Střelničná 773/51</span><span>180 00</span><span>Praha 8</span></a>
+          <a class="locr" href="https://www.google.com/maps/search/?api=1&amp;query=U%20vyso%C4%8Dansk%C3%A9ho%20pivovaru%20701/3%2C%20190%2000%20Praha%209%2C%20Czech%20Republic" target="_blank" rel="noopener"><span>U vysočanského pivovaru 701/3</span><span>190 00</span><span>Praha 9</span></a>
         </div>
         <div class="loccol">
           <div class="locc">Klecany</div>
-          <div class="locr"><span>Topolová 483</span><span>250 67</span><span>Klecany</span></div>
+          <a class="locr" href="https://www.google.com/maps/search/?api=1&amp;query=Topolov%C3%A1%20483%2C%20250%2067%20Klecany%2C%20Czech%20Republic" target="_blank" rel="noopener"><span>Topolová 483</span><span>250 67</span><span>Klecany</span></a>
         </div>
       </div>
     </div>
