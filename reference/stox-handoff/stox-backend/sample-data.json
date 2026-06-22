@@ -1,0 +1,43 @@
+{
+  "_note": "Sample payloads — exact shapes the dashboard consumes. Replace with live adapters in worker.js.",
+  "fx": { "EUR": 1, "USD": 0.92, "JPY": 0.0062, "CZK": 0.040, "asOf": "2026-06-22T11:50:00Z" },
+  "holdings": {
+    "KH": [
+      { "sym": "FLEX", "name": "Franklin Lexington PE Secondaries", "type": "Fund", "region": "Global", "ccy": "EUR", "value": 126747.92, "returnPct": 1.40, "dayPct": 0.20 },
+      { "sym": "JQUA", "name": "JPMorgan US Quality Factor", "type": "ETF", "region": "US", "ccy": "USD", "value": 89275.00, "returnPct": 12.85, "dayPct": 0.60 },
+      { "sym": "EMVL", "name": "iShares Edge MSCI EM Value", "type": "ETF", "region": "Emerging", "ccy": "USD", "value": 46173.60, "returnPct": 23.47, "dayPct": 1.10 },
+      { "sym": "1306", "name": "NEXT FUNDS TOPIX ETF", "type": "ETF", "region": "Japan", "ccy": "JPY", "value": 2578200, "returnPct": 12.31, "dayPct": 0.80 },
+      { "sym": "DFEN", "name": "VanEck Defense UCITS", "type": "ETF", "region": "Europe", "ccy": "EUR", "value": 12544.80, "returnPct": -11.73, "dayPct": -1.20 }
+    ],
+    "Monika": [
+      { "sym": "VWCE", "name": "Vanguard FTSE All-World", "type": "ETF", "region": "Global", "ccy": "EUR", "value": 38400, "returnPct": 9.20, "dayPct": 0.30 }
+    ]
+  },
+  "lots": {
+    "JQUA": [
+      { "date": "2024-02-10", "action": "buy", "amount": 48000, "ccy": "USD" },
+      { "date": "2025-04-18", "action": "add", "amount": 32000, "ccy": "USD" }
+    ]
+  },
+  "dividends": [
+    { "sym": "VHYL", "yieldPct": 3.6, "received": [ { "date": "2026-03-20", "amount": 718, "ccy": "USD" } ] }
+  ],
+  "advisor": [
+    { "act": "Add", "sym": "EMVL", "sector": "Emerging", "conviction": 82, "rationale": "EM value momentum building; softer USD a tailwind.", "sources": [["Bloomberg",30,"+"],["EM Weekly · newsletter",28,"+"],["Perplexity synth",20,"~"]] },
+    { "act": "Buy", "sym": "VNM", "sector": "Emerging", "conviction": 73, "rationale": "Vietnam: frontier→EM upgrade path is the catalyst.", "sources": [["EM Weekly · newsletter",30,"+"],["Reuters",22,"+"],["Perplexity synth",26,"+"]] }
+  ],
+  "sources": [
+    { "name": "Bank export", "weight": 90, "status": "live", "lastUpdate": "2026-06-22T06:00:00Z" },
+    { "name": "Yahoo Finance", "weight": 70, "status": "live", "lastUpdate": "2026-06-22T11:45:00Z" },
+    { "name": "Investment newsletters (e-mail)", "weight": 75, "status": "lagging", "lastUpdate": "2026-06-20T08:00:00Z" },
+    { "name": "Perplexity", "weight": 55, "status": "live", "lastUpdate": "2026-06-22T11:30:00Z" }
+  ],
+  "watchlist": [
+    { "sym": "NKE", "name": "Nike", "region": "US", "ccy": "USD", "entry": 95.00, "last": 45.20, "flaggedAt": "2025-04-01" }
+  ],
+  "settings": {
+    "feePct": 0.85,
+    "tags": { "Robotics": 1, "Semiconductors": 1, "Crypto": 2 },
+    "sources": { "Bank export": 90, "Yahoo Finance": 70, "Perplexity": 55 }
+  }
+}
