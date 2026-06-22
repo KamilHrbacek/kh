@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KH-Group — Vizuální architektura skupiny</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Libre+Caslon+Text:ital,wght@0,400;1,400&family=Noto+Sans+Arabic:wght@300;400&family=Titillium+Web:ital,wght@0,200;0,300;0,400;0,600;0,700;1,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/thin/style.css">
+<style>
+:root{
+  --ink: oklch(0.21 0.006 260);
+  --ink-soft: oklch(0.34 0.006 260);
+  --graphite: oklch(0.52 0.006 260);
+  --mute: oklch(0.64 0.005 260);
+  --paper: oklch(0.975 0.004 75);
+  --paper-2: oklch(0.945 0.005 75);
+  --card: oklch(0.995 0.002 75);
+  --line: oklch(0.88 0.004 75);
+  --line-soft: oklch(0.92 0.004 75);
+
+  /* Akcenty: zamčená lehkost + sytost, mění se jen ODSTÍN (hue) */
+  --L: 0.685;
+  --C: 0.175;
+  --industry: oklch(var(--L) 0.205 47);   /* PhotoRobot orange #FF6000 */
+  --reality:  oklch(0.76 0.13 84); /* zlatá — kovový rejstřík luxusu */
+  --khy: oklch(0.82 0.17 88); /* KH akcent — zvoleno 100:28, #FFB800, Pantone ~1235 C */
+  --gold-grad: url("assets/gold-v5-polished.png") center/cover; /* matná leštěná mosaz — pro text/clip */
+  --gold-ink: url("assets/gold-v5-polished.png") center/cover; /* tatáž textura — čte i na světlém */
+  --gold-metal: url("assets/gold-v5-brushed.png") center/cover; /* matná broušená mosaz — pro plochy */
+
+  --r: 0px 22px 0px 0px; /* obrobený roh — podpis skupiny */
+  --maxw: 1180px;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:'Titillium Web',system-ui,sans-serif;
+  font-size:17px;
+  line-height:1.62;
+  letter-spacing:0.006em;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 32px;}
+.mono{font-family:'DM Mono',ui-monospace,monospace;}
+.kicker{
+  font-family:'DM Mono',monospace;
+  font-size:12px;
+  letter-spacing:.22em;
+  text-transform:uppercase;
+  color:var(--graphite);
+  display:inline-flex;align-items:center;gap:10px;
+}
+.kicker::before{content:"";width:26px;height:1px;background:var(--graphite);display:inline-block;}
+h1,h2,h3,h4{margin:0;font-weight:700;line-height:1.08;letter-spacing:-0.005em;}
+p{margin:0 0 1em;}
+section{padding:104px 0;border-top:1px solid var(--line);}
+.lead{font-size:21px;line-height:1.56;letter-spacing:0.008em;color:var(--ink-soft);max-width:62ch;}
+a{color:inherit;}
+
+/* ---------- HERO ---------- */
+.hero{
+  background:var(--ink);
+  color:var(--paper);
+  border-top:none;
+  padding:0;
+  position:relative;
+  overflow:hidden;
+}
+.hero-inner{padding:120px 32px 104px;}
+.hero h1{
+  font-size:clamp(48px,8.2vw,124px);
+  font-weight:200;
+  letter-spacing:0.005em;
+  line-height:0.98;
+  margin:30px 0 0;
+  transform:scaleY(0.92);
+  transform-origin:left top;
+}
+.hero h1 b{font-weight:700;letter-spacing:-0.01em;}
+.hero h1 .o{color:var(--industry);}
+.hero h1 .a{color:var(--reality);}
+.hero .lead{color:oklch(0.82 0.006 260);margin-top:34px;font-size:clamp(18px,2vw,24px);letter-spacing:0.01em;line-height:1.52;}
+.hero .kicker{color:oklch(0.72 0.008 260);}
+.hero .kicker::before{background:oklch(0.58 0.008 260);}
+.corner-tag{
+  position:absolute;top:0;right:max(32px, calc((100% - 1180px) / 2 + 32px));
+  font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.18em;
+  color:oklch(0.62 0.01 260);
+  padding:22px 0;
+  text-transform:uppercase;
+}
+.hero-meta{
+  display:flex;flex-wrap:wrap;gap:40px 64px;margin-top:64px;
+  border-top:1px solid oklch(0.32 0.006 260);padding-top:34px;
+}
+.hero-meta div{max-width:230px;}
+.hero-meta .m-k{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:oklch(0.6 0.01 260);margin-bottom:8px;}
+.hero-meta .m-v{font-size:15px;color:oklch(0.88 0.006 260);line-height:1.45;}
+
+/* ---------- BIG STATEMENT ---------- */
+.statement{background:var(--paper-2);}
+.statement .big{
+  font-size:clamp(30px,4.6vw,62px);
+  font-weight:200;letter-spacing:0.002em;line-height:1.08;max-width:19ch;
+  transform:scaleY(0.94);transform-origin:left top;
+}
+.statement .big em,.statement .big .cy{font-weight:700;}
+.statement .big .cy{background:var(--gold-ink);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;}
+.statement .big em{font-style:normal;color:var(--industry);}
+.statement-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:64px;align-items:start;}
+.note{font-size:15px;color:var(--graphite);line-height:1.6;}
+.note strong{color:var(--ink);font-weight:600;}
+@media(max-width:820px){.statement-grid{grid-template-columns:1fr;gap:36px;}}
+
+.sec-head{margin-bottom:56px;}
+.sec-head h2{font-size:clamp(32px,4.2vw,58px);margin-top:18px;font-weight:200;letter-spacing:0.004em;transform:scaleY(0.94);transform-origin:left;}
+.sec-head .lead{margin-top:20px;}
+.num{font-family:'DM Mono',monospace;}
+
+/* ---------- ARCHITECTURE MAP ---------- */
+.map{display:flex;flex-direction:column;align-items:center;gap:0;}
+.node-kh{
+  background:var(--ink);color:var(--paper);
+  border-radius:var(--r);
+  padding:20px 30px;width:100%;
+  display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;
+}
+.node-kh .n-name{font-size:26px;font-weight:700;letter-spacing:-0.02em;}
+.node-kh .n-sub{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:oklch(0.68 0.01 260);margin-top:6px;}
+.stems{display:flex;justify-content:center;width:100%;height:28px;}
+.stems i{width:1px;background:var(--graphite);height:100%;}
+.branch-wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;width:100%;}
+.fam{
+  border:1px solid var(--line);
+  background:var(--card);
+  border-radius:var(--r);
+  padding:0;overflow:hidden;
+}
+.fam-head{padding:22px 26px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;justify-content:space-between;}
+.fam-head .f-t{font-size:20px;font-weight:700;letter-spacing:-0.01em;}
+.fam-head .f-d{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--graphite);margin-top:4px;}
+.swatch-dot{width:30px;height:30px;border-radius:0 9px 0 0;flex:0 0 auto;}
+.fam.robotics .swatch-dot{background:var(--industry);}
+.fam.manufacturing .swatch-dot{background:linear-gradient(135deg,oklch(0.62 0.012 250) 55%,var(--industry) 55%);}
+.fam.software .swatch-dot{background:#5B8DEF;}
+.fam.living .swatch-dot{background:linear-gradient(135deg,oklch(0.28 0.06 264) 50%,oklch(0.76 0.13 84) 50%);}
+.fam.travel .swatch-dot{background:linear-gradient(135deg,oklch(0.19 0.012 60) 50%,oklch(0.76 0.13 84) 50%);}
+.fam.care .swatch-dot{background:#DE0A96;}
+.fam-body{padding:14px 26px 26px;}
+.brand-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:11px 0;border-bottom:1px dashed var(--line-soft);}
+.brand-row:last-child{border-bottom:none;}
+.brand-row .b-n{font-weight:600;font-size:16px;}
+.brand-row .b-u{font-family:'DM Mono',monospace;font-size:12px;color:var(--mute);}
+.brand-row .b-s{font-size:13px;color:var(--graphite);}
+.brand-row .b-n a{color:inherit;text-decoration:none;}
+.brand-row .b-n a .arr{font-family:'DM Mono',monospace;font-size:12px;color:var(--mute);margin-left:7px;}
+.brand-row .b-n a:hover .arr{color:var(--ink);}
+@media(max-width:820px){.branch-wrap{grid-template-columns:1fr;}.stems{display:none;}}
+
+/* ---------- COLOR SYSTEM ---------- */
+.colors{background:var(--ink);color:var(--paper);}
+.colors .sec-head h2,.colors .num{color:var(--paper);}
+.colors .lead{color:oklch(0.8 0.006 260);}
+.colors .kicker{color:oklch(0.72 0.008 260);}
+.colors .kicker::before{background:oklch(0.58 0.008 260);}
+.hue-ring{display:grid;grid-template-columns:repeat(6,1fr);gap:0;border-radius:var(--r);overflow:hidden;margin:8px 0 14px;}
+.hue-ring .hc{height:120px;display:flex;align-items:flex-end;padding:12px;}
+.hue-ring .hc span{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;color:rgba(0,0,0,.62);font-weight:700;}
+.ring-cap{font-family:'DM Mono',monospace;font-size:12px;color:oklch(0.66 0.01 260);letter-spacing:.04em;}
+.spine{display:flex;border-radius:0 16px 0 0;overflow:hidden;margin:10px 0 14px;}
+.spine .seg{flex:1;height:118px;display:flex;align-items:flex-end;padding:14px;}
+.spine .seg span{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.05em;color:rgba(0,0,0,.6);font-weight:700;}
+@media(max-width:560px){.spine .seg{height:92px;}.spine .seg span{font-size:9px;}}
+.tier-row{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+.tier{position:relative;border-radius:0 20px 0 0;overflow:hidden;min-height:300px;color:#fff;display:flex;flex-direction:column;justify-content:space-between;padding:26px;}
+.tier .tb-eyebrow{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.6);}
+.tier h3{font-weight:200;font-size:clamp(26px,2.6vw,40px);line-height:1.0;letter-spacing:-0.005em;color:#fff;margin:0;transform:scaleY(0.94);transform-origin:left top;}
+.tier h3 b{font-weight:700;}
+.tier .tb-foot{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.65);}
+@media(max-width:820px){.tier-row{grid-template-columns:1fr;}}
+.fam-cols{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:56px;}
+.fam-col{border:1px solid oklch(0.32 0.006 260);border-radius:var(--r);overflow:hidden;}
+.fam-col .fc-band{height:8px;}
+.fc-band.ind{background:var(--industry);}
+.fc-band.rea{background:var(--reality);}
+.fam-col .fc-in{padding:26px;}
+.fam-col h3{font-size:22px;color:var(--paper);}
+.fam-col .fc-meta{font-family:'DM Mono',monospace;font-size:12px;color:oklch(0.66 0.01 260);margin-top:8px;letter-spacing:.04em;}
+.fam-col p{color:oklch(0.78 0.006 260);font-size:15px;margin-top:14px;}
+.ramp{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:20px;}
+.ramp .sw{height:46px;border-radius:0 6px 0 0;}
+.drift{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap;}
+.drift .ds{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.drift .dd{width:42px;height:42px;border-radius:0 12px 0 0;}
+.drift .dl{font-family:'DM Mono',monospace;font-size:10px;color:oklch(0.62 0.01 260);}
+@media(max-width:820px){.fam-cols{grid-template-columns:1fr;}.hue-ring{grid-template-columns:repeat(3,1fr);}}
+
+/* ---------- DNA / DIRECTIONS ---------- */
+.dna-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;}
+.dna-cell{background:var(--card);padding:30px 26px;}
+.dna-cell .d-i{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.18em;color:var(--graphite);text-transform:uppercase;}
+.dna-cell h4{font-size:19px;margin:14px 0 10px;font-weight:700;}
+.dna-cell p{font-size:14px;color:var(--graphite);margin:0;line-height:1.55;}
+.dna-cell .demo{height:66px;border-radius:0 12px 0 0;background:var(--paper-2);display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px;overflow:hidden;position:relative;}
+.dna-cell .demo .t-thin{font-weight:200;font-size:38px;letter-spacing:-0.02em;line-height:1;}
+.dna-cell .demo .t-bold{font-weight:700;font-size:38px;letter-spacing:-0.03em;line-height:1;}
+.dna-cell .demo .corner{width:42px;height:42px;border:2px solid var(--ink);border-radius:0 14px 0 0;}
+.dna-cell .demo.grid{gap:6px;}
+.dna-cell .demo.grid i{width:5px;height:42px;background:var(--line);display:block;}
+.dna-cell .demo.grid i:nth-child(2),.dna-cell .demo.grid i:nth-child(4){background:var(--graphite);}
+.dna-cell .demo.photo{background:repeating-linear-gradient(135deg,var(--line) 0 2px,transparent 2px 10px),var(--paper-2);}
+.dna-cell .demo.photo span{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--graphite);background:var(--card);padding:3px 7px;}
+@media(max-width:900px){.dna-grid{grid-template-columns:1fr 1fr;}}
+@media(max-width:560px){.dna-grid{grid-template-columns:1fr;}}
+
+.corner-demo{display:flex;gap:40px;align-items:center;flex-wrap:wrap;margin-top:14px;}
+.cd-box{width:150px;height:150px;border:2px solid var(--ink);border-radius:0 38px 0 0;display:flex;align-items:flex-end;padding:16px;}
+.cd-box .cd-l{font-family:'DM Mono',monospace;font-size:11px;color:var(--graphite);letter-spacing:.08em;}
+.cd-box.fill{background:var(--ink);border:none;}
+.cd-box.fill .cd-l{color:oklch(0.7 0.01 260);}
+.cd-box.orange{border-color:var(--khy);}
+
+/* directions */
+.dirs{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:16px;}
+.dir{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--card);}
+.dir-top{padding:18px 22px;border-bottom:1px solid var(--line-soft);display:flex;justify-content:space-between;align-items:center;}
+.dir-top .dt-n{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--graphite);}
+.dir-top .dt-pick{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;color:var(--mute);}
+.dir-body{padding:30px 22px 26px;min-height:230px;}
+.dir-body .dlogo{font-size:30px;font-weight:800;letter-spacing:-0.03em;}
+.dir-body .dlogo .x{color:var(--industry);}
+.dir-body .dh{font-size:25px;line-height:1.1;margin:18px 0 10px;letter-spacing:-0.02em;}
+.dir-body .dp{font-size:13.5px;color:var(--graphite);line-height:1.55;}
+.dir-body .dtag{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin-top:18px;display:block;}
+/* A engineered hairline */
+.dir.A{outline:2px solid var(--industry);outline-offset:-2px;}
+.dir.A .dlogo{font-family:'Titillium Web';font-weight:700;font-size:40px;letter-spacing:-0.01em;transform:scaleY(0.9);transform-origin:left;display:inline-block;}
+.dir.A .dh{font-family:'Titillium Web';font-weight:200;font-size:28px;}
+/* B editorial */
+.dir.B .dlogo{font-family:'Libre Caslon Text';font-weight:500;letter-spacing:-0.01em;}
+.dir.B .dh{font-family:'Libre Caslon Text';font-weight:400;font-size:28px;}
+/* C neutral swiss */
+.dir.C .dlogo{font-family:'Titillium Web';font-weight:600;letter-spacing:-0.02em;}
+.dir.C .dh{font-family:'Titillium Web';font-weight:500;}
+@media(max-width:900px){.dirs{grid-template-columns:1fr;}}
+
+/* ---------- BRAND PREVIEWS ---------- */
+.brands{background:var(--paper-2);}
+.bgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+.bcard{
+  background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  overflow:hidden;display:flex;flex-direction:column;
+}
+.bcard .ph{
+  height:128px;position:relative;
+  background:
+    repeating-linear-gradient(135deg, var(--ph) 0 2px, transparent 2px 11px),
+    var(--ph-bg);
+  display:flex;align-items:center;justify-content:center;
+}
+.bcard .ph .pl{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite);background:var(--card);padding:4px 8px;}
+.bcard .bc-in{padding:18px 20px 20px;flex:1;display:flex;flex-direction:column;}
+.bcard .bc-logo{font-size:19px;font-weight:700;letter-spacing:-0.02em;}
+.bcard .bc-logo .ac{color:var(--ac);}
+.bcard .bc-sec{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin-top:5px;}
+.bcard .bc-d{font-size:13px;color:var(--graphite);margin-top:12px;line-height:1.5;flex:1;}
+.bcard .bc-foot{display:flex;align-items:center;gap:8px;margin-top:16px;padding-top:13px;border-top:1px solid var(--line-soft);}
+.bcard .bc-foot .chip{width:13px;height:13px;border-radius:0 4px 0 0;background:var(--ac);}
+.bcard .bc-foot .ed{font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--mute);}
+@media(max-width:900px){.bgrid{grid-template-columns:1fr 1fr;}}
+@media(max-width:560px){.bgrid{grid-template-columns:1fr;}}
+
+/* ---------- LOGOS ---------- */
+.logos-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+.logocard{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--card);}
+.logocard .lc-stage{height:220px;background:var(--ink);display:flex;align-items:center;justify-content:center;gap:18px;}
+.logocard .lc-in{padding:22px 26px;}
+.logocard h4{font-size:19px;}
+.logocard .lc-u{font-family:'DM Mono',monospace;font-size:12px;color:var(--mute);margin-top:3px;}
+.logocard p{font-size:13.5px;color:var(--graphite);margin-top:12px;line-height:1.55;}
+.logo-word{color:var(--paper);font-size:27px;font-weight:700;letter-spacing:-0.02em;}
+.logo-word .lac{color:var(--ac2);}
+/* sheetparts mark: vrstvené plechy */
+.mark-sheet{display:flex;flex-direction:column;gap:6px;align-items:flex-start;}
+.mark-sheet i{display:block;height:7px;border-radius:1px;background:var(--paper);}
+.mark-sheet i:nth-child(1){width:46px;background:var(--industry);}
+.mark-sheet i:nth-child(2){width:40px;margin-left:7px;}
+.mark-sheet i:nth-child(3){width:34px;margin-left:14px;}
+/* prototype mark: čtverec s jedním zaobleným rohem */
+.mark-proto{width:46px;height:46px;border:3px solid var(--paper);border-radius:0 16px 0 0;}
+.mark-proto.fill{background:var(--industry);border:none;border-radius:0 16px 0 0;}
+/* KH endorsement mark */
+.mark-kh{width:46px;height:46px;border:3px solid var(--paper);border-radius:0 16px 0 0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:var(--paper);letter-spacing:-0.02em;}
+@media(max-width:820px){.logos-grid{grid-template-columns:1fr;}}
+/* flowsmith wordmark + heartbeat tečka */
+.fs-word{font-family:'Titillium Web';font-weight:600;letter-spacing:-.02em;font-size:30px;display:inline-flex;align-items:baseline;color:var(--paper);}
+.fs-word .smith{color:#5B8DEF;}
+.fs-word .online{font-weight:300;color:oklch(0.6 0.01 260);font-size:0.62em;margin-left:2px;}
+.fs-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:oklch(0.6 0.01 260);margin:0 2px;transform-origin:center;animation:fs-beat 2.4s ease-in-out infinite;}
+@keyframes fs-beat{0%{transform:scale(1)}8%{transform:scale(1.6)}16%{transform:scale(1.05)}26%{transform:scale(1.4)}38%{transform:scale(1)}100%{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.fs-dot{animation:none;}}
+
+/* ---------- ENDORSEMENT ---------- */
+.endo{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:stretch;}
+.endo .e-card{border:1px solid var(--line);border-radius:var(--r);padding:40px;display:flex;flex-direction:column;justify-content:center;gap:24px;min-height:240px;}
+.endo .e-card.dark{background:var(--ink);border:none;}
+.lockup{display:flex;align-items:center;gap:14px;}
+.lockup .lk-mark{width:56px;height:56px;border-radius:0 16px 0 0;border:2px solid var(--ink);display:flex;align-items:center;justify-content:center;color:var(--ink);flex:0 0 auto;}
+.lockup .lk-mark svg{height:22px;width:auto;display:block;}
+.endo .dark .lockup .lk-mark{border-color:var(--paper);color:var(--paper);}
+.lockup .lk-txt{line-height:1.1;}
+.lockup .lk-txt b{display:block;font-size:18px;font-weight:700;letter-spacing:-0.01em;}
+.endo .dark .lockup .lk-txt b{color:var(--paper);}
+.lockup .lk-txt span{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--graphite);}
+.endo .dark .lockup .lk-txt span{color:oklch(0.68 0.01 260);}
+.endo .e-card .e-cap{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);}
+.sig-inline{font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--graphite);display:flex;align-items:center;gap:9px;}
+.sig-inline .sq{width:13px;height:13px;border-radius:0 4px 0 0;background:var(--graphite);}
+@media(max-width:820px){.endo{grid-template-columns:1fr;}}
+
+/* ---------- GOVERNANCE ---------- */
+.gov{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+.govcol{border:1px solid var(--line);border-radius:var(--r);background:var(--card);overflow:hidden;}
+.govcol .g-h{padding:18px 22px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:10px;}
+.govcol .g-h .gdot{width:11px;height:11px;border-radius:50%;}
+.govcol .g-h h4{font-size:16px;}
+.govcol .g-h .gc{font-family:'DM Mono',monospace;font-size:11px;color:var(--mute);margin-left:auto;}
+.govcol ul{list-style:none;margin:0;padding:12px 22px 22px;}
+.govcol li{padding:9px 0;border-bottom:1px dashed var(--line-soft);font-size:14.5px;display:flex;justify-content:space-between;gap:10px;}
+.govcol li:last-child{border-bottom:none;}
+.govcol li span{font-family:'DM Mono',monospace;font-size:11px;color:var(--mute);}
+@media(max-width:900px){.gov{grid-template-columns:1fr;}}
+
+/* ---------- FOOTER ---------- */
+.foot{background:var(--ink);color:oklch(0.74 0.006 260);border-top:none;padding:70px 0;}
+.foot h3{color:var(--paper);font-size:24px;font-weight:700;letter-spacing:-0.02em;}
+.foot p{font-size:14px;max-width:60ch;margin-top:14px;}
+.foot .next{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:36px;}
+.foot .next .nx{border:1px solid oklch(0.32 0.006 260);border-radius:var(--r);padding:20px;}
+.foot .next .nx .nx-n{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.16em;color:oklch(0.72 0.008 260);text-transform:uppercase;}
+.foot .kicker::before{background:oklch(0.58 0.008 260);}
+.foot .next .nx p{margin-top:8px;color:oklch(0.8 0.006 260);}
+@media(max-width:820px){.foot .next{grid-template-columns:1fr;}}
+
+.divlabel{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--mute);margin:0 0 22px;}
+.tli-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:24px;align-items:stretch;}
+.panel{border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:28px;}
+.phbox{background:repeating-linear-gradient(135deg,var(--graphite) 0 2px,transparent 2px 12px),var(--paper-2);position:relative;border-radius:0 14px 0 0;}
+.phbox .pl{position:absolute;left:12px;bottom:12px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--graphite);background:var(--card);padding:3px 7px;}
+@media(max-width:820px){.tli-grid{grid-template-columns:1fr;}}
+.posture{background:var(--paper-2);}
+.cine{position:relative;border-radius:var(--r);overflow:hidden;height:min(74vh,660px);min-height:470px;color:#fff;display:flex;flex-direction:column;}
+.cine .cine-bg{position:absolute;inset:0;background:radial-gradient(125% 95% at 28% 16%, oklch(0.35 0.06 264) 0%, oklch(0.22 0.05 264) 50%, oklch(0.12 0.035 264) 100%);}
+.cine .cine-bg .pl{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:oklch(0.72 0.03 264);white-space:nowrap;}
+.cine .scrim{position:absolute;inset:0;background:linear-gradient(180deg, rgba(5,8,18,.55) 0%, rgba(5,8,18,.12) 40%, rgba(5,8,18,.6) 100%);}
+.cine-nav{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:22px 30px;gap:20px;}
+.cine-nav .cn-brand{font-weight:700;font-size:18px;letter-spacing:-0.01em;}
+.cine-nav .cn-brand .ac{color:var(--cgold);}
+.cine-nav .cn-links{display:flex;gap:26px;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.82);}
+.cine-nav .cn-end{display:flex;align-items:center;gap:10px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.72);}
+.cine-nav .cn-end .lk-mark{width:32px;height:32px;border-radius:0 9px 0 0;border:1.5px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;color:#fff;flex:0 0 auto;}
+.cine-nav .cn-end .lk-mark svg{height:12px;width:auto;display:block;}
+.cine-center{position:relative;z-index:2;text-align:center;margin:auto;padding:20px;}
+.cine-center h2{font-weight:200;font-size:clamp(40px,7vw,92px);letter-spacing:0.005em;line-height:1.0;color:#fff;transform:scaleY(0.92);transform-origin:center;}
+.cine-center h2 b{display:block;font-weight:700;letter-spacing:-0.01em;background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;}
+.cine-center p{font-weight:300;font-size:clamp(15px,1.6vw,19px);color:rgba(255,255,255,.82);max-width:44ch;margin:20px auto 0;}
+.cine-cta{display:inline-grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:14px;margin-top:30px;}
+.cine-cta a{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.12em;text-transform:uppercase;padding:13px 26px;border-radius:0 12px 0 0;text-decoration:none;}
+.cine-cta .primary{background:var(--gold-metal);color:oklch(0.24 0.03 264);font-weight:700;}
+.cine-spec .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--industry);margin-right:8px;vertical-align:1px;}
+.cine-spec .kh-sig{display:inline-flex;align-items:center;gap:10px;}
+.cine-spec .kh-sig img{display:block;}
+.cine-cta .ghost{border:1px solid rgba(255,255,255,.42);color:#fff;}
+.cine-spec{position:relative;z-index:2;margin-top:auto;padding:18px 30px;display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.6);}
+@media(max-width:680px){.cine-nav .cn-links{display:none;}}
+/* industry varianta sdílené kompozice */
+.cine.industry .cine-bg{background:repeating-linear-gradient(135deg, oklch(0.42 0.012 250) 0 2px, transparent 2px 13px), linear-gradient(180deg, oklch(0.34 0.012 250), oklch(0.15 0.008 250));}
+.cine.industry .cn-brand .ac{color:var(--industry);}
+.cine.industry .cine-center h2 b{background:none;-webkit-background-clip:initial;background-clip:initial;color:var(--industry);-webkit-text-fill-color:var(--industry);}
+.cine.industry .cine-cta .primary{background:var(--industry);color:oklch(0.18 0.02 47);}
+.dirs-final{display:grid;grid-template-columns:1fr 1.2fr;gap:24px;align-items:stretch;margin-top:8px;}
+.cmp-row{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:18px;}
+.cmp-l{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);}
+.cmp-w{font-weight:700;font-size:30px;letter-spacing:-0.02em;margin-top:10px;color:var(--ink);}
+.cmp-s{font-weight:300;font-size:16px;color:var(--graphite);margin-top:6px;}
+.us{display:inline-block;width:16px;height:0;border-bottom:1.5px solid currentColor;vertical-align:0.08em;margin:0 3px;opacity:.5;}
+@media(max-width:900px){.dirs-final{grid-template-columns:1fr;}}
+@media(max-width:560px){.cmp-row{grid-template-columns:1fr;}}
+.setgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(204px,1fr));gap:18px;}
+.setcard{border:1px solid var(--line);border-radius:var(--r);background:var(--card);padding:16px 16px 18px;}
+.setrow{display:flex;gap:7px;margin-bottom:12px;}
+.ms{width:34px;height:34px;border-radius:0 9px 0 0;display:block;flex:0 0 auto;border:1px solid var(--line-soft);}
+.setcard .sn{font-weight:700;font-size:15px;}
+.setcard .sr{font-family:'DM Mono',monospace;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);margin-top:3px;}
+.setcard .sp{font-size:12.5px;color:var(--graphite);margin:8px 0 0;line-height:1.5;}
+.setlabel{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--graphite);margin:4px 0 14px;}
+.rules{display:flex;flex-direction:column;border-top:1px solid var(--line);}
+.rule{display:grid;grid-template-columns:200px 1.25fr 0.95fr;gap:28px;align-items:start;padding:26px 0;border-bottom:1px solid var(--line);}
+.rule .r-k{font-weight:700;font-size:16px;letter-spacing:-0.005em;}
+.rule .r-spec{font-size:11px;color:var(--graphite);margin-top:8px;line-height:1.5;letter-spacing:.04em;}
+.rule .r-body p{font-size:14.5px;color:var(--ink-soft);line-height:1.6;margin:0;}
+.rule .r-demo{display:flex;align-items:center;flex-wrap:wrap;gap:10px;min-height:48px;background:var(--paper-2);border-radius:0 12px 0 0;padding:14px 16px;}
+@media(max-width:900px){.rule{grid-template-columns:1fr;gap:14px;}.rule .r-demo{margin-top:4px;}}
+</style>
+</head>
+<body>
+
+<style>
+#manual-nav{position:sticky;top:0;z-index:90;background:oklch(0.21 0.006 260);border-bottom:1px solid oklch(0.34 0.006 260);}
+#manual-nav .mn-in{max-width:1180px;margin:0 auto;padding:11px 32px;display:flex;justify-content:space-between;gap:6px 20px;align-items:center;}
+#manual-nav .mn-links{display:flex;flex-wrap:wrap;gap:6px 20px;align-items:center;justify-content:flex-end;}
+#manual-nav a{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:oklch(0.72 0.008 260);text-decoration:none;white-space:nowrap;}
+#manual-nav a:hover{color:#fff;}
+#manual-nav .mn-brand{display:inline-flex;align-items:center;gap:12px;font-weight:700;font-size:13px;color:#fff;letter-spacing:.02em;margin-right:8px;white-space:nowrap;text-decoration:none;cursor:pointer;}
+#manual-nav .mn-brand svg{height:17px;width:auto;display:block;flex:0 0 auto;}
+#manual-nav .mn-brand .sep{width:1px;height:16px;background:oklch(0.45 0.006 260);}
+section,footer{scroll-margin-top:58px;}
+</style>
+<nav id="manual-nav"><div class="mn-in"><a class="mn-brand" href="#top" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;"><svg viewBox="1130 800 1260 900" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="KH"><g transform="matrix(4.16667,0,0,4.16667,261.577,49.4367)"><g transform="matrix(1,0,0,1,256.329,274.17)"><path d="M0,-83.008L0,106.219L-34.816,106.219L-34.816,-83.008L0,-83.008Z" fill="currentColor"/></g><g transform="matrix(1,0,0,1,383.046,304.447)"><path d="M0,-37.343L76.952,-37.343L76.952,-113.285L111.774,-113.285L111.774,75.942L76.952,75.942L76.952,-5.302L0,-5.302" fill="currentColor"/></g><g transform="matrix(1,0,0,1,387.995,380.389)"><path d="M0,-189.227L-40.622,-189.227L-94.752,-107.226L-103.298,-94.614L-94.752,-82.001L-40.622,0L0,0L-63.721,-94.614L0,-189.227Z" fill="currentColor"/></g></g></svg><span class="sep"></span>brand-manual</a><span class="mn-links"><a href="#s-arch">Světy</a><a href="#s-barvy">Barvy</a><a href="#s-dna">DNA &amp; typo</a><a href="#s-codex-typo">Codex typo</a><a href="#s-postoj">Postoj</a><a href="#s-portfolio">Portfolio</a><a href="#s-znacky">Značky</a><a href="#s-loga">Loga</a><a href="#s-podpis">Podpis</a><a href="#s-konvence">Konvence</a><span class="mn-links-x"></span><a href="#s-integrace">Integrace</a><a href="#s-codex-barvy">Codex barvy</a><a href="#s-sprava">Správa</a></span></div></nav>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+  var m={"Architektura":"s-arch","Barevný systém":"s-barvy","Sdílená DNA":"s-dna","Typografická pravidla":"s-codex-typo","Postoj":"s-postoj","Barva podle obsahu":"s-portfolio","Náhledy značek":"s-znacky","Nová loga":"s-loga","Endorsement podpis":"s-podpis","Ekosystémové konvence":"s-konvence","Integrační vzory":"s-integrace","Codex barev":"s-codex-barvy","Správa portfolia":"s-sprava"};
+  document.querySelectorAll('[data-screen-label]').forEach(function(el){
+    var id=m[el.getAttribute('data-screen-label')];
+    if(id&&!document.getElementById(id)){el.id=id;}
+  });
+  // mapa = rozcestník: značky klikací, ↗ = opouštím web (konvence 08·02)
+  var links={
+    "photorobot.com / .ai":"https://www.photorobot.com",
+    "uni-robot.com":"https://www.uni-robot.com",
+    "sls.market":"https://www.sls.market",
+    "sheetparts.com":"https://www.sheetparts.com",
+    "prototype.builders":"https://www.prototype.builders",
+    "flowsmith.online":"https://flowsmith.online",
+    "bestpenthouse.cz":"https://www.bestpenthouse.cz",
+    "madhouse.vip":"https://www.madhouse.vip",
+    "strizkov.apartments":"https://www.strizkov.apartments",
+    "strelnicna.cz":"https://www.strelnicna.cz",
+    "mysak.studio":"https://www.mysak.studio",
+    "pink · PhotoRobot Medical":"https://cases.photorobot.io/breast-cancer-care/"
+  };
+  document.querySelectorAll('.map .b-n').forEach(function(el){
+    var t=el.textContent.trim(), u=links[t];
+    if(u){el.innerHTML='<a href="'+u+'" target="_blank" rel="noopener">'+t+'<span class="arr">↗</span></a>';}
+  });
+});
+</script>
+
+<!-- ===================== HERO ===================== -->
+<header class="hero" data-screen-label="Hero">
+  <div class="corner-tag">KH-GROUP · BRAND ARCHITECTURE · v0.3</div>
+  <div class="wrap hero-inner">
+    <span class="kicker">Vizuální architektura skupiny</span>
+    <h1>Jeden <b>systém</b>.<br>Mnoho <b class="o">podob</b>.<br>Jeden <b class="a">podpis</b>.</h1>
+    <p class="lead">Luxusní byt a e-shop s nářadím nemůžou vypadat stejně — a nemají. Skupinu nedrží pohromadě jedna barva, ale jedno&nbsp;<strong style="color:var(--paper)">pravidlo</strong>: sdílená typografie, mřížka, fotostyl a jeden obrobený roh. Z toho pravidla pak každý obor čerpá vlastní tvář.</p>
+    <div class="hero-meta">
+      <div><div class="m-k">Model</div><div class="m-v">Endorsed house — vlastní značky pod podpisem „člen KH-Group"</div></div>
+      <div><div class="m-k">Barvy</div><div class="m-v">Živý signál pro techniku, kovový klid pro luxus</div></div>
+      <div><div class="m-k">Rodiny</div><div class="m-v">Reality / Living &nbsp;·&nbsp; Industry / Tech</div></div>
+      <div><div class="m-k">Podpis</div><div class="m-v">Obrobený roh — strukturální DNA napříč vším</div></div>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== STATEMENT ===================== -->
+<section class="statement" data-screen-label="Východisko">
+  <div class="wrap statement-grid">
+    <div>
+      <span class="kicker">Východisko</span>
+      <p class="big" style="margin-top:22px;">Nepotřebujete jednu barvu na všechno. Potřebujete <em>jedno pravidlo</em>, ze kterého vzniká <span class="cy">každá barva</span>.</p>
+    </div>
+    <div>
+      <p class="divlabel">K barvám luxusu vs. techniky</p>
+      <p class="note"><strong>Energie patří technice, klid luxusu.</strong> Oranžová #FF6000 je skvělý <em>signál</em> pro průmysl — má hučet. Luxusní reality (art-deco bestpenthouse, golden-hour madhouse) ale nechtějí signál, chtějí <em>materiál</em>: tlumenou zlatou a mosaz na hluboké modři nebo černi.</p>
+      <p class="note">Skupinu proto nedrží jedna paleta, ale jedna <strong>disciplína</strong>: stejná typografie, mřížka, obrobený roh a podpis. Barva je naopak nástroj, kterým každý obor mluví vlastním hlasem.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 01 ARCHITECTURE MAP ===================== -->
+<section data-screen-label="Architektura">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker"><span class="num">01</span> &nbsp;Mapa světů</span>
+      <h2>Šest světů, jedna disciplína</h2>
+      <p class="lead">KH-Group není jeden obor, ale souostroví. Každý <strong>svět</strong> má vlastní klima — barvu, tón, materiál — a přesto všechny sdílí stejnou pevninu: typografii, obrobený roh a podpis. Tak drží pohromadě i obory tak vzdálené jako robotika a luxusní bydlení.</p>
+    </div>
+
+    <div class="map">
+      <div class="node-kh">
+        <div><div class="n-name">KH-Group</div><div class="n-sub">Holding · achromatický · barvu nevnucuje</div></div>
+        <div class="n-sub" style="text-align:right;">Endorsed house · šest světů, každý vlastní klima + podpis „člen KH-Group“</div>
+      </div>
+      <div class="stems"><i></i></div>
+      <div class="branch-wrap">
+
+        <div class="fam robotics">
+          <div class="fam-head">
+            <div>
+              <div class="f-t">Robotika</div>
+              <div class="f-d">Robotická fotografie · oranžová #FF6000 + černá</div>
+            </div>
+            <div class="swatch-dot"></div>
+          </div>
+          <div class="fam-body">
+            <div class="brand-row"><div><div class="b-n"><a href="https://www.photorobot.com" target="_blank" rel="noopener">photorobot.com<span class="arr">↗</span></a> / <a href="https://www.photorobot.ai" target="_blank" rel="noopener">.ai<span class="arr">↗</span></a></div><div class="b-s">Robotická fotografie</div></div><div class="b-u">oranž + černá</div></div>
+            <div class="brand-row"><div><div class="b-n">uni-robot.com</div><div class="b-s">Sesterský k PhotoRobot</div></div><div class="b-u">oranž + černá</div></div>
+          </div>
+        </div>
+
+        <div class="fam manufacturing">
+          <div class="fam-head">
+            <div>
+              <div class="f-t">Výroba / Dílna</div>
+              <div class="f-d">On-line objednání tovární výroby · ocel + oranž</div>
+            </div>
+            <div class="swatch-dot"></div>
+          </div>
+          <div class="fam-body">
+            <div class="brand-row"><div><div class="b-n">sheetparts.com</div><div class="b-s">Plechové díly · instant kalkulace</div></div><div class="b-u">ocel + oranž</div></div>
+            <div class="brand-row"><div><div class="b-n">sls.market</div><div class="b-s">SLS 3D tisk z plastu · instant kalkulace</div></div><div class="b-u">bílý prášek + oranž</div></div>
+            <div class="brand-row"><div><div class="b-n">prototype.builders</div><div class="b-s">Prototypování</div></div><div class="b-u">antracit + oranž</div></div>
+          </div>
+        </div>
+
+        <div class="fam software">
+          <div class="fam-head">
+            <div>
+              <div class="f-t">Software / Automatizace</div>
+              <div class="f-d">Bez hardwaru · digitální chlad · logo blue</div>
+            </div>
+            <div class="swatch-dot"></div>
+          </div>
+          <div class="fam-body">
+            <div class="brand-row"><div><div class="b-n">flowsmith.online</div><div class="b-s">Automation studio · workflow, AI, procesy</div></div><div class="b-u">#5B8DEF</div></div>
+          </div>
+        </div>
+
+        <div class="fam living">
+          <div class="fam-head">
+            <div>
+              <div class="f-t">Bydlení / Reality</div>
+              <div class="f-d">Architektonický neutrál + akcent z charakteru místa</div>
+            </div>
+            <div class="swatch-dot"></div>
+          </div>
+          <div class="fam-body">
+            <div class="brand-row"><div><div class="b-n">bestpenthouse.cz</div><div class="b-s">Art-deco penthouse</div></div><div class="b-u">navy + mosaz</div></div>
+            <div class="brand-row"><div><div class="b-n">strizkov.apartments</div><div class="b-s">Rezidenční bydlení</div></div><div class="b-u">dub + bílá</div></div>
+            <div class="brand-row"><div><div class="b-n">strelnicna.cz</div><div class="b-s">Rezidenční bydlení</div></div><div class="b-u">hrášková</div></div>
+            <div class="brand-row"><div><div class="b-n">mysak.studio</div><div class="b-s">Studio nápadů a vizí</div></div><div class="b-u">teplé neutrály</div></div>
+          </div>
+        </div>
+
+        <div class="fam travel">
+          <div class="fam-head">
+            <div>
+              <div class="f-t">Travel / Escape</div>
+              <div class="f-d">Camping &amp; cestování · land yachting</div>
+            </div>
+            <div class="swatch-dot"></div>
+          </div>
+          <div class="fam-body">
+            <div class="brand-row"><div><div class="b-n">madhouse.vip</div><div class="b-s">Land yachting · zážitek</div></div><div class="b-u">čerň + mosaz</div></div>
+          </div>
+        </div>
+
+        <div class="fam care">
+          <div class="fam-head">
+            <div>
+              <div class="f-t">Care</div>
+              <div class="f-d">Magenta z poslání · člověk před strojem</div>
+            </div>
+            <div class="swatch-dot"></div>
+          </div>
+          <div class="fam-body">
+            <div class="brand-row"><div><div class="b-n">pink · PhotoRobot Medical</div><div class="b-s">Medicínské zobrazování · breast cancer care</div></div><div class="b-u">#DE0A96</div></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <p class="note" style="text-align:center;margin-top:30px;max-width:70ch;margin-left:auto;margin-right:auto;">Šest světů, jedna pevnina. Tolik barevných klimat unese jen proto, že je drží pohromadě sdílená typografie, obrobený roh a podpis — ne jedna paleta.</p>
+  </div>
+</section>
+
+<!-- ===================== 02 COLOR SYSTEM ===================== -->
+<section class="colors" data-screen-label="Barevný systém">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker"><span class="num">02</span> &nbsp;Barevný systém</span>
+      <h2>Jedno pravidlo, mnoho identit</h2>
+      <p class="lead">Dva rejstříky pod jednou disciplínou. Industry / Tech čerpá živé signály z jednoho kruhu — zamčená lehkost i sytost, mění se jen odstín. Reality / Living stojí na sdíleném architektonickém neutrálu (kámen, beton, taupe) a akcent navrch čerpá z charakteru místa — dobových materiálů a světla konkrétní rezidence.</p>
+    </div>
+
+    <p class="ring-cap">Teplá osa skupiny: KH-Group uprostřed zůstává bez barvy (černá / bílá / šedé), barvy nesou jen obory:</p>
+    <div class="spine">
+      <div class="seg" style="background:#FF6000;"><span>Industry · oranžová</span></div>
+      <div class="seg" style="background:oklch(0.32 0.006 260);"><span style="color:rgba(255,255,255,.78);">← KH-Group · bez barvy →</span></div>
+      <div class="seg" style="background:oklch(0.74 0.12 84);"><span>Luxury · zlatá</span></div>
+    </div>
+    <p class="ring-cap">Tahle teplá osa + neutrály (grafit, ocel, architektonický kámen) unesou skoro všechno. Další barvy (hrášková strelnicny, teal…) jsou <strong style="color:var(--paper)">vzácné výjimky z obsahu</strong>, ne paleta omalóvánek — zákazník to musí pochopit i bez manuálu.</p>
+
+    <div class="fam-cols">
+      <div class="fam-col">
+        <div class="fc-band ind"></div>
+        <div class="fc-in">
+          <h3>Industry / Tech</h3>
+          <div class="fc-meta">ROBOTIKA + VÝROBA · ORANŽOVÁ 47 · #FF6000 + OCEL</div>
+          <p>Energie, preciznost, stroj. Oranžová s černou zůstává (pasují skvěle) — přidáváme k nim <strong>ocelově šedou</strong> jako materiálový neutrál: kov, broušení, stroj.</p>
+          <div class="ramp">
+            <div class="sw" style="background:oklch(0.93 0.05 47)"></div>
+            <div class="sw" style="background:oklch(0.82 0.12 47)"></div>
+            <div class="sw" style="background:oklch(0.685 0.205 47)"></div>
+            <div class="sw" style="background:oklch(0.52 0.16 47)"></div>
+            <div class="sw" style="background:oklch(0.34 0.09 47)"></div>
+          </div>
+          <div class="fc-meta" style="margin-top:18px;">OCELOVĚ ŠEDÁ · MATERIÁLOVÝ NEUTRÁL</div>
+          <div class="ramp">
+            <div class="sw" style="background:oklch(0.86 0.005 250)"></div>
+            <div class="sw" style="background:oklch(0.72 0.006 250)"></div>
+            <div class="sw" style="background:oklch(0.58 0.007 250)"></div>
+            <div class="sw" style="background:oklch(0.44 0.007 250)"></div>
+            <div class="sw" style="background:oklch(0.30 0.006 250)"></div>
+          </div>
+          <div class="drift">
+            <div class="ds"><div class="dd" style="background:oklch(0.66 0.19 47)"></div><div class="dl">PhotoRobot<br>oranžová</div></div>
+            <div class="ds"><div class="dd" style="background:oklch(0.9 0.004 250)"></div><div class="dl">sls<br>prášek + oranž.</div></div>
+            <div class="ds"><div class="dd" style="background:oklch(0.62 0.012 250)"></div><div class="dl">sheetparts<br>ocel</div></div>
+            <div class="ds"><div class="dd" style="background:oklch(0.3 0.006 260)"></div><div class="dl">prototype<br>antracit</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fam-col">
+        <div class="fc-band rea"></div>
+        <div class="fc-in">
+          <h3>Reality / Living</h3>
+          <div class="fc-meta">ARCHITEKTONICKÝ NEUTRÁL + AKCENT Z MÍSTA</div>
+          <p>Celá realitní větev stojí na sdíleném <strong>architektonickém neutrálu</strong> (kámen, taupe, beton, London grey — z mysak spec). Akcent navrch <strong>čerpá z charakteru místa</strong> — dobových materiálů a světla konkrétní rezidence, ne z ceny: zeleň zahrady, dub interiéru, art-deco mosaz, golden-hour čerň.</p>
+          <div class="ramp">
+            <div class="sw" style="background:oklch(0.9 0.008 85)"></div>
+            <div class="sw" style="background:oklch(0.78 0.018 80)"></div>
+            <div class="sw" style="background:oklch(0.68 0.012 85)"></div>
+            <div class="sw" style="background:oklch(0.52 0.006 90)"></div>
+            <div class="sw" style="background:oklch(0.32 0.006 260)"></div>
+          </div>
+          <div class="drift">
+            <div class="ds"><div class="dd" style="background:oklch(0.8 0.15 128)"></div><div class="dl">strelnicna<br>zeleň zahrady</div></div>
+            <div class="ds"><div class="dd" style="background:oklch(0.6 0.055 66)"></div><div class="dl">strizkov<br>dub interiéru</div></div>
+            <div class="ds"><div class="dd" style="background:oklch(0.28 0.06 264)"></div><div class="dl">bestpenthouse<br>art-deco mosaz</div></div>
+            <div class="ds"><div class="dd" style="background:oklch(0.19 0.012 60)"></div><div class="dl">madhouse<br>golden-hour</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fam-col">
+        <div class="fc-band" style="background:#5B8DEF"></div>
+        <div class="fc-in">
+          <h3>Software / Automatizace</h3>
+          <div class="fc-meta">LOGO BLUE · #5B8DEF · DIGITÁLNÍ CHLAD</div>
+          <p>Bez hardwaru — workflow, AI, procesy. Studená modrá #5B8DEF (z loga flowsmith) odlišuje digitální svět od fyzické oranžové výroby. Na antracitu, čistě a technicky.</p>
+          <div class="ramp">
+            <div class="sw" style="background:oklch(0.93 0.03 264)"></div>
+            <div class="sw" style="background:oklch(0.82 0.08 264)"></div>
+            <div class="sw" style="background:#5B8DEF"></div>
+            <div class="sw" style="background:oklch(0.5 0.13 264)"></div>
+            <div class="sw" style="background:oklch(0.34 0.08 264)"></div>
+          </div>
+          <div class="drift">
+            <div class="ds"><div class="dd" style="background:#5B8DEF"></div><div class="dl">flowsmith<br>#5B8DEF</div></div>
+            <div class="ds"><div class="dd" style="background:#86A9FF"></div><div class="dl">hover<br>#86A9FF</div></div>
+            <div class="ds"><div class="dd" style="background:oklch(0.3 0.006 260)"></div><div class="dl">podklad<br>antracit</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="fam-col">
+        <div class="fc-band" style="background:#DE0A96"></div>
+        <div class="fc-in">
+          <h3>Care</h3>
+          <div class="fc-meta">MAGENTA #DE0A96 · BARVA Z POSLÁNÍ</div>
+          <p>Magenta nevychází z materiálu, ale z poslání (stužka). Empatie, člověk před strojem. Na bílé čte text tmavší <strong>#B9087D</strong>, na tmavém <strong>#F796D6</strong>; tinty 5–9 % povoleny pro callouty — výjimka Care.</p>
+          <div class="ramp">
+            <div class="sw" style="background:oklch(0.95 0.03 350)"></div>
+            <div class="sw" style="background:oklch(0.82 0.13 350)"></div>
+            <div class="sw" style="background:oklch(0.62 0.23 350)"></div>
+            <div class="sw" style="background:oklch(0.5 0.2 350)"></div>
+            <div class="sw" style="background:oklch(0.34 0.13 350)"></div>
+          </div>
+          <div class="drift">
+            <div class="ds"><div class="dd" style="background:#DE0A96"></div><div class="dl">pink<br>#DE0A96</div></div>
+            <div class="ds"><div class="dd" style="background:#B9087D"></div><div class="dl">text<br>#B9087D</div></div>
+            <div class="ds"><div class="dd" style="background:#F796D6"></div><div class="dl">na tmavém<br>#F796D6</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:48px;">
+      <div class="mono" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:oklch(0.66 0.01 260);margin-bottom:14px;">Zlatá · plochá (špatně) vs. textura (správně)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:600px;">
+        <div style="border-radius:0 12px 0 0;overflow:hidden;border:1px solid oklch(0.32 0.006 260);">
+          <div style="height:100px;background:oklch(0.76 0.13 84);"></div>
+          <div style="padding:10px 13px;background:var(--ink);"><div style="font-weight:600;color:var(--paper);font-size:14px;">Plochá</div><div class="mono" style="font-size:10px;color:oklch(0.6 0.01 260);margin-top:2px;">jeden tón — riziko „smutné žluté"</div><div class="mono" style="font-size:9px;color:oklch(0.55 0.01 260);margin-top:5px;">#C9A24A · oklch(0.76 0.13 84) · plochý token, drobné UI</div></div>
+        </div>
+        <div style="border-radius:0 12px 0 0;overflow:hidden;border:1px solid oklch(0.32 0.006 260);">
+          <div style="height:100px;background:var(--gold-metal);"></div>
+          <div style="padding:10px 13px;background:var(--ink);"><div style="font-weight:600;color:var(--paper);font-size:14px;">Kovová · textura</div><div class="mono" style="font-size:10px;color:oklch(0.6 0.01 260);margin-top:2px;">reálný kov, ne gradient</div><div class="mono" style="font-size:9px;color:oklch(0.55 0.01 260);margin-top:5px;line-height:1.5;">--gold-metal: url(assets/gold-v5-brushed.png) · procedurální broušená mosaz, stoupající odlesk, nízký kontrast. Pro text: --gold-grad (leštěná) přes background-clip:text.</div></div>
+        </div>
+      </div>
+      <p style="color:oklch(0.78 0.006 260);font-size:13px;margin:13px 0 0;max-width:600px;line-height:1.55;">Plochá zlatá zůstane vždy jen žlutohnědá — a CSS gradient je zase jen „hezčí přechod“. Kov dělá až <strong style="color:var(--paper)">reálná textura</strong>: matná broušená mosaz s nízkým kontrastem a stoupajícím odleskem. Jeden token, používá se všude. Na tisku <strong style="color:var(--paper)">ražba / fólie</strong>, ne CMYK.</p>
+    </div>
+    <div style="margin-top:48px;display:flex;align-items:center;gap:22px;flex-wrap:wrap;border-top:1px solid oklch(0.32 0.006 260);padding-top:34px;">
+      <div style="display:flex;border-radius:var(--r);overflow:hidden;flex:0 0 auto;">
+        <div style="width:64px;height:64px;background:var(--ink);"></div>
+        <div style="width:64px;height:64px;background:var(--paper);"></div>
+      </div>
+      <div>
+        <div class="mono" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:oklch(0.66 0.01 260);">KH-Group · holding</div>
+        <div style="font-weight:600;font-size:19px;color:var(--paper);margin-top:6px;">Achromatický: černá + bílá + šedé</div>
+        <p style="color:oklch(0.78 0.006 260);font-size:14px;margin:6px 0 0;max-width:54ch;line-height:1.55;">Holding bez vlastní barvy — nejvyšší možná neutralita: nad barevnými dětmi stojí černobílá autorita. Žlutá 100:28 (#FFB800, Pantone ~1235 C) slouží jako heritage akcent. Logo KH barvu nepředepisuje — žije dobře v mnoha barvách.</p>
+      </div>
+    </div>
+    <div style="margin-top:36px;">
+      <div class="mono" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:oklch(0.66 0.01 260);margin-bottom:14px;">Žlutá 100:28 · heritage akcent</div>
+      <div style="display:flex;border-radius:0 14px 0 0;overflow:hidden;max-width:600px;">
+        <div style="flex:1;height:108px;background:oklch(0.685 0.205 47);display:flex;align-items:flex-end;padding:10px;"><span class="mono" style="font-size:10px;color:rgba(0,0,0,.6);font-weight:700;">PR oranžová · #FF6000</span></div>
+        <div style="flex:1;height:108px;background:oklch(0.82 0.17 88);display:flex;align-items:flex-end;padding:10px;"><span class="mono" style="font-size:10px;color:rgba(0,0,0,.62);font-weight:700;">100:28 · #FFB800</span></div>
+        <div style="flex:1;height:108px;background:oklch(0.76 0.13 84);display:flex;align-items:flex-end;padding:10px;"><span class="mono" style="font-size:10px;color:rgba(0,0,0,.55);font-weight:700;">zlatá · luxus</span></div>
+      </div>
+      <p style="color:oklch(0.78 0.006 260);font-size:13px;margin:16px 0 0;max-width:600px;line-height:1.55;"><strong style="color:var(--paper)">100:28 (#FFB800)</strong> dotýkající se oranžové: dost odlišná, aby nebyla „skoro oranžová", a přitom z téže teplé rodiny. Pokud holding zůstane achromatický, slouží jen jako <strong style="color:var(--paper)">vzácný heritage akcent</strong>. Pantone blízko 1235 C / 7549 C.</p>
+    </div>
+    <p class="ring-cap" style="margin-top:32px;">Definujeme v oklch kvůli logice systému — ale každá finální barva dostane i <strong style="color:var(--paper)">HEX / RGB</strong> a pro tisk, polep a dveře (mysak.studio!) také <strong style="color:var(--paper)">Pantone / CMYK</strong>. Přímé barvy nezahazujeme, jen je dnes řídíme z jednoho zdroje.</p>
+  </div>
+</section>
+
+<!-- ===================== 03 DNA ===================== -->
+<section data-screen-label="Sdílená DNA">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker"><span class="num">03</span> &nbsp;Sdílená DNA</span>
+      <h2>Sdílená DNA: co spojuje, když barva odlišuje</h2>
+      <p class="lead">Každá značka má vlastní barvu a obor — ale tyhle společné pohyby z nich dělají jednu skupinu. Tady v kostce a naživo; níž rozpracované do detailu (písmo, kompozice, ochranné zóny, koordinace).</p>
+    </div>
+
+    <div class="dna-grid">
+      <div class="dna-cell">
+        <div class="demo"><span class="t-thin">Aa</span><span class="t-bold">Aa</span></div>
+        <div class="d-i">A · Typografie</div>
+        <h4>Titillium: tenké × tučné</h4>
+        <p>Jedno písmo skupiny (+ mono na „spec“). Hairline nadpisy × Bold logotyp — síla z napětí, ne z tloušťky.</p>
+      </div>
+      <div class="dna-cell">
+        <div class="demo"><span class="corner"></span></div>
+        <div class="d-i">B · Obrobený roh</div>
+        <h4>Strukturální podpis</h4>
+        <p>Jeden zaoblený roh na kartách, rámech i logu. Tichý, ale oko ho pozná napříč skupinou.</p>
+      </div>
+      <div class="dna-cell">
+        <div class="demo grid"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="d-i">C · Mřížka &amp; vzduch</div>
+        <h4>Velkorysost a ochranné zóny</h4>
+        <p>Z PhotoRobot manuálu: jednoduchost a dostatek prostoru. Jeden žebřík mezer (viz níž).</p>
+      </div>
+      <div class="dna-cell">
+        <div class="demo photo"><span>foto</span></div>
+        <div class="d-i">D · Fotostyl</div>
+        <h4>Reálný obraz, stejné ořezy</h4>
+        <p>Skutečné fotky, ne ilustrace. Stejná tonalita a ořezy — jiný objekt: byt, robot, plech.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:56px;">
+      <p class="divlabel">Obrobený roh v praxi</p>
+      <div class="corner-demo">
+        <div class="cd-box"><span class="cd-l">karta / rám</span></div>
+        <div class="cd-box fill"><span class="cd-l">tmavá plocha</span></div>
+        <div class="cd-box" style="border-color:var(--industry);"><span class="cd-l">akcent · Industry</span></div>
+        <div class="cd-box" style="border-color:var(--graphite);"><span class="cd-l">akcent · KH · neutrál</span></div>
+        <div class="cd-box" style="border-color:oklch(0.7 0.12 84);"><span class="cd-l">akcent · Luxury</span></div>
+        <p class="note" style="max-width:30ch;">Vždy jeden roh, vždy stejná logika. Nese akcent oboru (Industry, Luxury) — KH sám zůstává neutrální.</p>
+      </div>
+    </div>
+
+    <div style="margin-top:64px;">
+      <p class="divlabel">03·E <span class="us"></span> Hlas skupiny <span class="us"></span> potvrzeno: směr A</p>
+      <div class="dirs-final">
+        <div class="dir A" data-screen-label="Směr A Engineered">
+          <div class="dir-top"><span class="dt-n">Směr A · Engineered Hairline</span><span class="dt-pick">✓ potvrzeno · B a C ven</span></div>
+          <div class="dir-body">
+            <div class="dlogo">KH GROUP</div>
+            <div class="dh">Precizní. Vzdušné. Sebevědomé.</div>
+            <p class="dp">Pravidlo „kde a na co": logotyp a názvy značek tučně (jako KH GROUP výše), velké nadpisy hairline a mírně rozšířené. Mono popisky drží inženýrský charakter.</p>
+            <span class="dtag">tučný wordmark × tenké nadpisy</span>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="mono" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--graphite);">Titillium Web · strop u Bold (700)</div>
+          <div class="cmp-row">
+            <div>
+              <div class="cmp-l">200 → 700 · tady je hravé</div>
+              <div class="cmp-w" style="font-weight:200;">KH GROUP</div>
+              <div class="cmp-s" style="font-weight:400;">Jeden systém, mnoho podob.</div>
+              <div class="cmp-w" style="font-weight:700;margin-top:10px;">KH GROUP</div>
+              <div class="cmp-s">Bold (700) = náš strop pro „heavy“.</div>
+            </div>
+            <div>
+              <div class="cmp-l">Black (900) · mimo systém</div>
+              <div class="cmp-w" style="font-weight:900;color:var(--mute);">KH GROUP</div>
+              <div class="cmp-s">V plné velikosti se slévá ✗</div>
+              <div class="cmp-s" style="margin-top:14px;">Když chceme „úder“, neměníme font — uděláme ho <strong>velký, do plné plochy</strong> (černý/oranžový blok) a obklopíme vzduchem.</div>
+            </div>
+          </div>
+          <p class="note" style="margin-top:16px;">Zvoleno (B): skupina i PhotoRobot mluví Titillium Web, řez max. Bold (700) — tím se přirozeně navazuje na vaše tištěné materiály. Sílu nese měřítko a plocha, ne tlustší inkoust.</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:72px;">
+      <p class="divlabel">03·F <span class="us"></span> Písmo, jazyky &amp; ikony</p>
+      <div class="tli-grid">
+        <div class="panel">
+          <div class="mono" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--graphite);">Titillium Web (≤ Bold 700) · Libre Caslon Text · mono · Noto</div>
+          <div style="font-weight:200;font-size:clamp(34px,4.6vw,58px);letter-spacing:0;line-height:1.0;margin:16px 0 2px;transform:scaleY(0.92);transform-origin:left;">Příliš žluťoučký kůň</div>
+          <div style="font-weight:300;font-size:22px;color:var(--ink-soft);letter-spacing:.01em;">Polski · Tiếng Việt · Română · Čeština</div>
+          <div dir="rtl" style="font-family:'Noto Sans Arabic';font-weight:300;font-size:27px;margin-top:10px;">العربية — جاهز لليمين</div>
+          <p class="note" style="margin-top:18px;">Skupina mluví <strong>Titillium Web</strong>, řez max. Bold 700 (v tenkém je hravé, black se slévá). Latinka s diakritikou; řečtinu, cyrilici a RTL doplní <strong>Noto</strong>. Mono drží „spec" popisky, <strong>Libre Caslon Text</strong> (OFL) editoriál. PhotoRobot tím přirozeně navazuje na své tištěné materiály. Pravidlo: v odstavci jeden řez, max. jeden důraz.</p>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:24px;">
+          <div class="panel" style="padding:24px 26px;">
+            <div class="mono" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--graphite);">Prostrkání = čitelnost</div>
+            <div style="font-weight:300;font-size:19px;letter-spacing:-0.02em;margin-top:14px;">ARCHITEKTURA</div>
+            <div class="mono" style="font-size:10px;color:var(--mute);margin-top:2px;">těsně · −0.02em</div>
+            <div style="font-weight:300;font-size:19px;letter-spacing:0.22em;margin-top:14px;">ARCHITEKTURA</div>
+            <div class="mono" style="font-size:10px;color:var(--mute);margin-top:2px;">vzdušně · +0.22em → čitelnější, klidnější (ladíme 0.20–0.24)</div>
+          </div>
+          <div class="panel" style="padding:24px 26px;">
+            <div class="mono" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--graphite);">Ikony · Phosphor (thin) · ~1 500 · MIT</div>
+            <div style="display:flex;gap:18px;font-size:33px;margin-top:16px;color:var(--ink);flex-wrap:wrap;line-height:1;">
+              <i class="ph-thin ph-file-text"></i><i class="ph-thin ph-package"></i><i class="ph-thin ph-receipt"></i><i class="ph-thin ph-cube"></i><i class="ph-thin ph-buildings"></i><i class="ph-thin ph-camera"></i><i class="ph-thin ph-printer"></i><i class="ph-thin ph-wrench"></i>
+            </div>
+            <p class="note" style="margin-top:14px;">Standard skupiny: <strong>Phosphor</strong> (thin) — tenké řezy ladí s hairline, ~1 500 ikon. První tři výše (dokument, balík, účtenka) jsou přesně ty z <strong>cpq.photorobot.io</strong> — Phosphor je má také, přechod tedy beze ztráty.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:72px;">
+      <p class="divlabel">03·G <span class="us"></span> Kompozice · měřítko a kontrapunkt vah</p>
+      <div class="tli-grid">
+        <div class="panel">
+          <div class="mono" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--graphite);">Malé velké, velké jako výřez</div>
+          <div style="display:flex;gap:18px;align-items:flex-end;margin-top:18px;">
+            <div class="phbox" style="flex:1;height:190px;"><span class="pl">detail · přes celou plochu</span></div>
+            <div class="phbox" style="width:84px;height:96px;"><span class="pl">celek</span></div>
+          </div>
+          <p class="note" style="margin-top:16px;">Malou věc ukážeme obří (textura prášku, hrana plechu), velkou jen jako výřez — A380 poznáte podle dvou pater i z rohu, není ho třeba kreslit celý.</p>
+        </div>
+        <div class="panel">
+          <div class="mono" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--graphite);">Kontrapunkt · ultra-tenké × heavy</div>
+          <div style="margin-top:16px;line-height:0.92;">
+            <div style="font-weight:200;font-size:clamp(40px,6vw,76px);letter-spacing:-0.005em;transform:scale(1.06,0.88);transform-origin:left;">přesnost</div>
+            <div style="font-weight:700;font-size:clamp(40px,6vw,76px);letter-spacing:-0.025em;transform:scale(1.04,0.9);transform-origin:left;">ŘEMESLO</div>
+          </div>
+          <p class="note" style="margin-top:16px;">Hairline ve velkém + černý řez jako úder. Velké hairline navíc <strong>mírně rozšiřujeme a snižujeme</strong> (nižší poměr výška:šířka), ať nejsou samá vytáhlá svíčka. Logotyp ale zůstává tučný.</p>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:72px;">
+      <p class="divlabel">03·H <span class="us"></span> Ochranné zóny &amp; rytmus odstupů</p>
+      <div class="tli-grid">
+        <div class="panel">
+          <div class="mono" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--graphite);">Jeden žebřík mezer · 4 → 64</div>
+          <div style="margin-top:18px;display:flex;flex-direction:column;gap:11px;">
+            <div style="display:flex;align-items:center;gap:14px;"><div style="height:11px;width:4px;background:var(--industry);"></div><span class="mono" style="font-size:11px;color:var(--mute);">4 · uvnitř prvku</span></div>
+            <div style="display:flex;align-items:center;gap:14px;"><div style="height:11px;width:8px;background:var(--industry);"></div><span class="mono" style="font-size:11px;color:var(--mute);">8</span></div>
+            <div style="display:flex;align-items:center;gap:14px;"><div style="height:11px;width:16px;background:var(--industry);"></div><span class="mono" style="font-size:11px;color:var(--mute);">16</span></div>
+            <div style="display:flex;align-items:center;gap:14px;"><div style="height:11px;width:24px;background:var(--industry);"></div><span class="mono" style="font-size:11px;color:var(--mute);">24 · uvnitř skupiny</span></div>
+            <div style="display:flex;align-items:center;gap:14px;"><div style="height:11px;width:40px;background:var(--industry);"></div><span class="mono" style="font-size:11px;color:var(--mute);">40</span></div>
+            <div style="display:flex;align-items:center;gap:14px;"><div style="height:11px;width:64px;background:var(--industry);"></div><span class="mono" style="font-size:11px;color:var(--mute);">64 · mezi skupinami</span></div>
+          </div>
+          <p class="note" style="margin-top:18px;">Mezery vybíráme z jednoho žebříku — nikdy „skoro stejně". Malé kroky uvnitř bloku, velké mezi bloky. Z PhotoRobot manuálu: ochranná zóna = nedotknutelný vzduch kolem prvku, teď rozšířený na vše.</p>
+        </div>
+        <div class="panel">
+          <div class="mono" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--graphite);">Seskupení = hierarchie na první pohled</div>
+          <div style="margin-top:20px;">
+            <div>
+              <div class="mono" style="font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--industry);">01 — Skupina</div>
+              <div style="font-weight:700;font-size:21px;letter-spacing:-0.01em;margin-top:5px;">Patří k sobě</div>
+              <div class="note" style="margin-top:5px;">Štítek, nadpis a text drží těsně — čtou se jako jeden blok.</div>
+            </div>
+            <div style="height:40px;"></div>
+            <div>
+              <div class="mono" style="font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--industry);">02 — Druhá skupina</div>
+              <div style="font-weight:700;font-size:21px;letter-spacing:-0.01em;margin-top:5px;">Oddělená odstupem</div>
+              <div class="note" style="margin-top:5px;">Velká mezera = nová myšlenka. Plus váhy: heavy nadpis → tenký podnadpis → mono štítek dělají strukturu zřejmou bez čtení.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:72px;">
+      <p class="divlabel">03·I <span class="us"></span> Koordinace barev · princip „Tommy Hilfiger"</p>
+      <div class="panel">
+        <div class="mono" style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--graphite);">Vlastní barva + sdílený detail = vše k sobě ladí</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:16px;margin-top:20px;">
+          <div style="border:1px solid var(--line);border-radius:0 14px 0 0;overflow:hidden;">
+            <div style="height:82px;background:oklch(0.62 0.17 47);"></div>
+            <div style="padding:10px 12px;"><div class="mono" style="font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);">Industry</div><div style="font-weight:600;font-size:13px;margin-top:2px;">PhotoRobot</div></div>
+          </div>
+          <div style="border:1px solid var(--line);border-radius:0 14px 0 0;overflow:hidden;">
+            <div style="height:82px;background:oklch(0.34 0.06 264);"></div>
+            <div style="padding:10px 12px;"><div class="mono" style="font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);">Reality</div><div style="font-weight:600;font-size:13px;margin-top:2px;">bestpenthouse</div></div>
+          </div>
+          <div style="border:1px solid var(--line);border-radius:0 14px 0 0;overflow:hidden;">
+            <div style="height:82px;background:oklch(0.6 0.055 66);"></div>
+            <div style="padding:10px 12px;"><div class="mono" style="font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);">Reality</div><div style="font-weight:600;font-size:13px;margin-top:2px;">strizkov</div></div>
+          </div>
+          <div style="border:1px solid var(--line);border-radius:0 14px 0 0;overflow:hidden;">
+            <div style="height:82px;background:oklch(0.62 0.012 250);"></div>
+            <div style="padding:10px 12px;"><div class="mono" style="font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);">Industry</div><div style="font-weight:600;font-size:13px;margin-top:2px;">sheetparts</div></div>
+          </div>
+        </div>
+        <p class="note" style="margin-top:18px;">Jako u Tommy Hilfiger: paleta je navržená tak, aby k sobě ladila — všechny barvy vychází ze stejné DNA (zamčená sytost a jas). Proto kterékoli dvě značky vedle sebe (na kh-group.eu, na veletrhu, v co-brandingu) sednou. Sjednocuje je sdílený strukturní detail — obrobený roh a mono štítek — ne vnucená barevná linka.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 03·K TYPOGRAFICKÁ PRAVIDLA ===================== -->
+<section data-screen-label="Typografická pravidla">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker"><span class="num">03·K</span> &nbsp;Codex</span>
+      <h2>Typografická pravidla</h2>
+      <p class="lead">Co jsme vyladili, černé na bílém — základ, ze kterého rozepíšeme CSS proměnné pro ostatní weby skupiny. Každé pravidlo má své „kde ano / kde ne".</p>
+    </div>
+
+    <div class="rules">
+      <div class="rule">
+        <div class="r-k">01 — Písmová sada</div>
+        <div class="r-spec mono">Titillium Web · Libre Caslon Text · DM Mono · Noto</div>
+        <div class="r-body">
+          <p><strong>Titillium Web</strong> je webové písmo skupiny (navazuje na tištěné materiály). <strong>Libre Caslon Text</strong> (OFL) pro editoriál, <strong>DM Mono</strong> pro „spec" popisky, <strong>Noto</strong> pro řečtinu/cyrilici a RTL. PhotoRobot si Titillium drží jako vlastní zakořeněné písmo.</p>
+        </div>
+        <div class="r-demo"><span style="font-weight:300;font-size:30px;">Titillium</span> <span class="mono" style="font-size:15px;color:var(--graphite);">Mono</span> <span style="font-family:'Libre Caslon Text';font-size:24px;">Caslon</span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">02 — Váhový strop</div>
+        <div class="r-spec mono">font-weight ≤ 700 (Bold). Black 900 NIKDY.</div>
+        <div class="r-body">
+          <p>Titillium je hravé v tenkých tazích; v black se v plné velikosti slévá. Strop je <strong>Bold 700</strong>. Sílu nese měřítko a plocha, ne tlustší inkoust.</p>
+        </div>
+        <div class="r-demo"><span style="font-weight:200;font-size:28px;">200</span> <span style="font-weight:400;font-size:28px;">400</span> <span style="font-weight:600;font-size:28px;">600</span> <span style="font-weight:700;font-size:28px;">700 ✓</span> <span style="font-weight:700;font-size:28px;color:var(--mute);text-decoration:line-through;opacity:.5;">900</span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">03 — Snížení výšky</div>
+        <div class="r-spec mono">transform: scaleY(0.90–0.94)</div>
+        <div class="r-body">
+          <p><strong>Kde ANO:</strong> velké displejové nadpisy (hairline) a bold přepisy názvu jako text. <strong>Kde NE:</strong> logo / wordmark jako asset (deformace značky), drobný text a body. Sníží „vytáhlý" poměr velkých liter do klidnější proporce.</p>
+        </div>
+        <div class="r-demo"><span style="font-weight:200;font-size:42px;display:inline-block;transform:scaleY(0.92);transform-origin:left;">Aa</span> <span class="mono" style="font-size:12px;color:var(--graphite);">↓ scaleY 0.92</span> &nbsp; <span style="font-weight:200;font-size:42px;color:var(--mute);">Aa</span> <span class="mono" style="font-size:12px;color:var(--mute);">100%</span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">04 — Rozpaly (tracking)</div>
+        <div class="r-spec mono">hairline +0.004→0.01em · mono labely +0.16→0.22em · body +0.006em</div>
+        <div class="r-body">
+          <p>Velkorysejší rozpaly = lepší čitelnost a klid (Bovensiepen). Hairline nadpisy lehce kladné, mono „spec" labely výrazně rozpálené, body jemně. Logotyp wordmark naopak mírně záporné, aby držel pohromadě.</p>
+        </div>
+        <div class="r-demo"><span style="letter-spacing:0.2em;font-size:15px;" class="mono">SPEC LABEL</span> &nbsp; <span style="font-weight:300;font-size:22px;letter-spacing:0.01em;">Nadpis hairline</span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">05 — Kontrapunkt vah</div>
+        <div class="r-spec mono">hairline 200 (nadpis) × Bold 700 (logotyp / akcent)</div>
+        <div class="r-body">
+          <p>Síla z napětí, ne z tloušťky. Velký tenký nadpis vedle tučného logotypu/úderu. K tomu kontrast měřítka: malé věci velké, velké jako výřez.</p>
+        </div>
+        <div class="r-demo"><span style="font-weight:200;font-size:36px;">přesnost</span> <span style="font-weight:700;font-size:36px;">ŘEMESLO</span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">06 — Žebřík mezer &amp; ochranné zóny</div>
+        <div class="r-spec mono">4 · 8 · 16 · 24 · 40 · 64 px</div>
+        <div class="r-body">
+          <p>Mezery z jednoho žebříku, nikdy „skoro stejně". Malé uvnitř bloku, velké mezi bloky. Kolem každého prvku nedotknutelná ochranná zóna (z PhotoRobot manuálu, rozšířená na vše).</p>
+        </div>
+        <div class="r-demo" style="gap:0;align-items:flex-end;"><span style="height:11px;width:4px;background:var(--ink);margin-right:8px;"></span><span style="height:11px;width:8px;background:var(--ink);margin-right:8px;"></span><span style="height:11px;width:16px;background:var(--ink);margin-right:8px;"></span><span style="height:11px;width:24px;background:var(--ink);margin-right:8px;"></span><span style="height:11px;width:40px;background:var(--ink);margin-right:8px;"></span><span style="height:11px;width:64px;background:var(--ink);"></span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">07 — Kovová mosaz</div>
+        <div class="r-spec mono">--gold-grad (text) · --gold-metal (plochy) · textura, ne gradient</div>
+        <div class="r-body">
+          <p>Zlatá = <strong>reálná broušená textura</strong> (procedurální, stoupající odlesk), ne CSS gradient. Pro text přes <span class="mono">background-clip:text</span>, pro plochy jako výplň. Matná broušená mosaz — sedí k art-deco, nekřičí. Na tisku ražba / fólie.</p>
+        </div>
+        <div class="r-demo"><span style="background:var(--gold-ink);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;font-weight:700;font-size:34px;">MOSAZ</span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">08 — Jeden řez na odstavec</div>
+        <div class="r-spec mono">1 font + max. 1 důraz / odstavec</div>
+        <div class="r-body">
+          <p>V jednom odstavci jeden řez a nejvýš jeden druh důrazu. Žádná směs fontů, vah a kurzív naráz — to byla dřívější chyba. Klid a hierarchie přednost před efektem.</p>
+        </div>
+        <div class="r-demo"><span style="font-size:16px;color:var(--ink-soft);">Klidný odstavec s <strong>jedním důrazem</strong>.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 04 BRAND PREVIEWS ===================== -->
+<section class="brands" data-screen-label="Náhledy značek">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker"><span class="num">04</span> &nbsp;Systém v akci</span>
+      <h2>Stejná kostra, jiná kůže</h2>
+      <p class="lead">Každá karta má stejný skelet — obrobený roh, mono štítek oboru, endorsement podpis dole. Liší se jen odstín rodiny a tón. To je důkaz, že systém funguje napříč obory.</p>
+    </div>
+
+    <div class="bgrid">
+      <!-- reality -->
+      <div class="bcard" style="--ac:oklch(0.7 0.12 84);--ph:oklch(0.42 0.05 264);--ph-bg:oklch(0.28 0.05 264);">
+        <div class="ph"><span class="pl">foto · art-deco interiér</span></div>
+        <div class="bc-in"><div class="bc-logo">best<span class="ac">penthouse</span></div><div class="bc-sec">Reality / Living · navy + zlatá</div><div class="bc-d">Art-deco klenot Prahy. Hluboká modř, restaurovaný nábytek, zlatý detail.</div><div class="bc-foot"><span class="chip"></span><span class="ed">člen KH-Group</span></div></div>
+      </div>
+      <div class="bcard" style="--ac:oklch(0.6 0.055 66);--ph:oklch(0.78 0.04 70);--ph-bg:oklch(0.92 0.02 74);">
+        <div class="ph"><span class="pl">foto · dubový interiér</span></div>
+        <div class="bc-in"><div class="bc-logo">strizkov<span class="ac">.apartments</span></div><div class="bc-sec">Reality / Living · dub interiéru</div><div class="bc-d">Vybavené byty s dubovým interiérem — dub, bílá, antracit.</div><div class="bc-foot"><span class="chip"></span><span class="ed">člen KH-Group</span></div></div>
+      </div>
+      <div class="bcard" style="--ac:oklch(0.74 0.12 82);--ph:oklch(0.26 0.02 60);--ph-bg:oklch(0.17 0.012 60);">
+        <div class="ph"><span class="pl">foto · golden-hour liner</span></div>
+        <div class="bc-in"><div class="bc-logo">mad<span class="ac">house.vip</span></div><div class="bc-sec">Reality / Living · černá + zlatá</div><div class="bc-d">Luxusní liner. Už dnes žije v teplé černi a zlaté — udává tón celé rodině.</div><div class="bc-foot"><span class="chip"></span><span class="ed">člen KH-Group</span></div></div>
+      </div>
+      <!-- industry -->
+      <div class="bcard" style="--ac:var(--industry);--ph:oklch(0.8 0.1 47);--ph-bg:oklch(0.95 0.03 47);">
+        <div class="ph"><span class="pl">foto · robotická fotostudia</span></div>
+        <div class="bc-in"><div class="bc-logo">Photo<span class="ac">Robot</span></div><div class="bc-sec">Industry / Tech · orange · kotva</div><div class="bc-d">Robotická produktová fotografie. Šestiúhelník zůstává.</div><div class="bc-foot"><span class="chip"></span><span class="ed">člen KH-Group</span></div></div>
+      </div>
+      <div class="bcard" style="--ac:var(--industry);--ph:oklch(0.86 0.004 250);--ph-bg:oklch(0.95 0.002 250);">
+        <div class="ph"><span class="pl">foto · spékaný prášek detail</span></div>
+        <div class="bc-in"><div class="bc-logo">sls<span class="ac">.market</span></div><div class="bc-sec">Industry / Tech · bílý prášek + oranžová jiskra</div><div class="bc-d">SLS 3D tisk z plastu s instantní kalkulačkou.</div><div class="bc-foot"><span class="chip"></span><span class="ed">člen KH-Group</span></div></div>
+      </div>
+      <div class="bcard" style="--ac:var(--industry);--ph:oklch(0.7 0.008 250);--ph-bg:oklch(0.84 0.006 250);">
+        <div class="ph"><span class="pl">foto · ohýbaný plech</span></div>
+        <div class="bc-in"><div class="bc-logo">sheet<span class="ac">parts</span></div><div class="bc-sec">Industry / Tech · ocel + oranžový akcent</div><div class="bc-d">Výroba plechových dílů s instantní kalkulačkou.</div><div class="bc-foot"><span class="chip"></span><span class="ed">člen KH-Group</span></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 4.5 POSTURE ===================== -->
+<section class="posture" data-screen-label="Postoj">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker"><span class="num">4.5</span> &nbsp;Postoj</span>
+      <h2>Tesla-grade: foto vede, text šeptá</h2>
+      <p class="lead">Apple, Tesla, Starlink — společný jmenovatel je klid: celoplošná kinematografická fotografie, minimum prvků, hairline × heavy a hodně vzduchu. Takhle vypadá kostra skupiny v plné aplikaci — stejný skelet, jiný obor = jiná paleta.</p>
+    </div>
+    <div class="cine" style="--cgold:oklch(0.82 0.1 85);">
+      <div class="cine-bg"><span class="pl">foto · art-deco interiér · golden hour</span></div>
+      <div class="scrim"></div>
+      <div class="cine-nav">
+        <div class="cn-brand">best<span class="ac">penthouse</span></div>
+        <div class="cn-links"><span>Rezidence</span><span>Galerie</span><span>Kontakt</span></div>
+      </div>
+      <div class="cine-center">
+        <h2>Klenot Prahy<b>ART DECO</b></h2>
+        <p>1 197 m² nad střechami města. Restaurovaný dobový nábytek, soukromá střešní zahrada, výhled na celou Prahu.</p>
+        <div class="cine-cta"><a class="primary" href="#">Prohlédnout rezidenci</a><a class="ghost" href="#">Galerie</a></div>
+      </div>
+      <div class="cine-spec"><span><i class="dot" style="background:oklch(0.78 0.1 85);"></i>Praha 1 · Penthouse</span><span class="kh-sig"><img src="assets/kh-endorse-mark-white.svg" alt="KH" width="32" height="32">člen KH-Group</span></div>
+    </div>
+    <div class="cine industry" style="margin-top:26px;" data-screen-label="Postoj Industry">
+      <div class="cine-bg"><span class="pl">foto · robotické rameno · detail v oceli</span></div>
+      <div class="scrim"></div>
+      <div class="cine-nav">
+        <div class="cn-brand" style="display:flex;align-items:center;"><img src="assets/pr-logo-mark.svg" alt="" style="height:26px;width:auto;display:block;margin-right:12px;">PhotoRobot<span style="width:1px;height:20px;background:rgba(255,255,255,.25);margin:0 14px;"></span><span style="font-family:'DM Mono',monospace;font-size:12px;letter-spacing:.2em;color:rgba(255,255,255,.85);font-weight:500;">ROBOTS</span></div>
+        <div class="cn-links"><span>photorobot.com ↗</span></div>
+      </div>
+      <div class="cine-center">
+        <h2>From hours<b>TO SECONDS.</b></h2>
+        <p>Turnkey product photography. Industrial grade. Engineered to spec, delivered globally, ready from day one.</p>
+        <div class="cine-cta"><a class="primary" href="#">Explore robots →</a><a class="ghost" href="#">Use cases →</a></div>
+      </div>
+      <div class="cine-spec"><span><i class="dot"></i>Prague&nbsp;&nbsp;&nbsp;<i class="dot"></i>New York</span><span class="kh-sig"><img src="assets/kh-endorse-mark-white.svg" alt="KH" width="32" height="32">a KH-Group company</span></div>
+    </div>
+    <p class="note" style="margin-top:22px;max-width:64ch;">Stejný postoj, jiný obor: kompozice, mřížka i podpis se nemění — mění se jen paleta (mosaz → oranžová + ocel) a fotografie.</p>
+
+    <div class="cine" style="--cgold:#86A9FF;margin-top:26px;background:#0F1116;" data-screen-label="Postoj Software">
+      <canvas data-flow="ribbon" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
+      <div class="scrim" style="background:linear-gradient(180deg,rgba(15,17,22,.86) 0%,rgba(15,17,22,.12) 42%,rgba(15,17,22,.95) 100%);"></div>
+      <div class="cine-nav">
+        <div class="cn-brand"><span class="fs-word" style="font-size:20px;"><span>flow</span><span class="smith">smith</span><span class="fs-dot"></span><span class="online">online</span></span></div>
+        <div class="cn-links"><span>flowsmith.online ↗</span></div>
+      </div>
+      <div class="cine-center">
+        <h2>Flows, <b style="background:none;-webkit-text-fill-color:#86A9FF;color:#86A9FF;">forged</b> to fit.</h2>
+        <p>Tell us the busywork that slows your team down. We forge a custom automation — built, run and maintained for you.</p>
+        <div class="cine-cta"><a class="primary" href="#" style="background:#5B8DEF;color:#0a0e18;">Talk to the smiths →</a><a class="ghost" href="#">See flows ↗</a></div>
+      </div>
+      <div class="cine-spec"><span><i class="dot" style="background:#5B8DEF;"></i>Prague&nbsp;&nbsp;&nbsp;<i class="dot" style="background:#5B8DEF;"></i>New York</span><span class="kh-sig"><img src="assets/kh-endorse-mark-white.svg" alt="KH" width="32" height="32">a KH-Group company</span></div>
+    </div>
+    <p class="note" style="margin-top:22px;max-width:64ch;">Třetí obor, stejná kostra: rytá „stuha" na <span class="mono">&lt;canvas&gt;</span> (jen transform/opacity, pod prefers-reduced-motion), heartbeat tečka, hodiny dvou poboček — softwarový puls místo fotky. Akcent logo blue #5B8DEF.</p>
+  </div>
+</section>
+
+<script>
+/* Flow „rytá stuha" — giloš na canvasu (jen transform/opacity, respektuje prefers-reduced-motion).
+   Parametry převzaty z flowsmith.online: 30 linek, sinusová páteř, modré valéry. */
+(function(){
+  function initRibbons(){
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var blue=[91,141,239], bright=[134,169,255];
+  function rgba(c,a){return 'rgba('+c[0]+','+c[1]+','+c[2]+','+a+')';}
+  var items=[].map.call(document.querySelectorAll('canvas[data-flow]'),function(c){return {c:c};});
+  function fit(it){var r=it.c.getBoundingClientRect();if(!r.width||!r.height)return;var dpr=Math.min(2,window.devicePixelRatio||1);it.c.width=Math.round(r.width*dpr);it.c.height=Math.round(r.height*dpr);it.ctx=it.c.getContext('2d');it.ctx.setTransform(dpr,0,0,dpr,0,0);it.w=r.width;it.h=r.height;}
+  function ribbon(it,t){var ctx=it.ctx,w=it.w,h=it.h;if(!ctx)return;ctx.clearRect(0,0,w,h);var spine=function(x){return h*0.5+h*0.15*Math.sin(x*0.005+t*0.32)+h*0.06*Math.sin(x*0.012-t*0.26);};var M=30,i,o,center,x,y;for(i=0;i<M;i++){o=i-(M-1)/2;center=1-Math.abs(o)/((M-1)/2);ctx.beginPath();for(x=0;x<=w;x+=5){y=spine(x)+o*5+6*Math.sin(x*0.02+t*0.5+o*0.18);x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}if(Math.abs(o)<0.6){ctx.strokeStyle=rgba(bright,0.55);ctx.lineWidth=1.4;}else{ctx.strokeStyle=rgba(blue,0.05+0.16*center);ctx.lineWidth=0.8+center*0.7;}ctx.stroke();}}
+  items.forEach(function(it){fit(it);if(window.ResizeObserver){var ro=new ResizeObserver(function(){fit(it);if(reduce)ribbon(it,0);});ro.observe(it.c);}});
+  if(reduce){items.forEach(function(it){ribbon(it,0);});}
+  else{var t0=performance.now();(function loop(now){requestAnimationFrame(loop);var t=(now-t0)/1000;items.forEach(function(it){ribbon(it,t);});})(t0);}
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initRibbons);else initRibbons();
+})();
+</script>
+
+<!-- ===================== 4.6 BARVA PODLE OBSAHU ===================== -->
+<section data-screen-label="Barva podle obsahu">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker"><span class="num">4.6</span> &nbsp;Barva podle obsahu</span>
+      <h2>Logika: obor → materiál → barva</h2>
+      <p class="lead">U realit nese akcent charakter konkrétního místa, ne cenu. Barevné sady pro celé portfolio — obor, materiál a akcent pohromadě.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:40px;">
+      <div style="border-left:3px solid var(--ink);padding:4px 0 4px 18px;"><div style="font-weight:700;font-size:15px;">1 · Jeden akcent</div><p style="font-size:13.5px;color:var(--graphite);margin:6px 0 0;line-height:1.55;">Každý web = černá / bílá / šedé + <strong>jediný akcent</strong>. Nikdy víc. Tím padá riziko omalovánek.</p></div>
+      <div style="border-left:3px solid var(--ink);padding:4px 0 4px 18px;"><div style="font-weight:700;font-size:15px;">2 · Akcent = materiál oboru</div><p style="font-size:13.5px;color:var(--graphite);margin:6px 0 0;line-height:1.55;">Barva není dekorace — vychází z toho, co obor fyzicky dělá: ocel plechu, bílý prášek, dub interiéru, mosaz art-deca, oranžová robotů.</p></div>
+      <div style="border-left:3px solid var(--ink);padding:4px 0 4px 18px;"><div style="font-weight:700;font-size:15px;">3 · Reality: barva z místa</div><p style="font-size:13.5px;color:var(--graphite);margin:6px 0 0;line-height:1.55;">U bydlení akcent neřadí cenu — čerpá z charakteru rezidence: zeleň zahrady, dub interiéru, art-deco mosaz. Každé místo svrchované, žádná hierarchie.</p></div>
+    </div>
+    <div class="setlabel">Reality · barva z charakteru místa</div>
+    <div class="setgrid">
+      <div class="setcard"><div class="setrow"><span class="ms" style="background:oklch(0.8 0.15 128)"></span><span class="ms" style="background:oklch(0.96 0.004 120)"></span><span class="ms" style="background:oklch(0.32 0.006 260)"></span></div><div class="sn">strelnicna</div><div class="sr">zeleň zahrady</div><p class="sp">Hrášková + bílá + antracit. Svěží zeleň z interiérů.</p></div>
+      <div class="setcard"><div class="setrow"><span class="ms" style="background:oklch(0.62 0.055 68)"></span><span class="ms" style="background:oklch(0.95 0.005 80)"></span><span class="ms" style="background:oklch(0.3 0.006 260)"></span></div><div class="sn">strizkov</div><div class="sr">dub interiéru</div><p class="sp">Dub + bílá + antracit (z fotek). Teplé dřevo udává tón.</p></div>
+      <div class="setcard"><div class="setrow"><span class="ms" style="background:oklch(0.3 0.05 264)"></span><span class="ms" style="background:var(--gold-metal)"></span><span class="ms" style="background:oklch(0.95 0.01 90)"></span></div><div class="sn">bestpenthouse</div><div class="sr">art-deco mosaz</div><p class="sp">Art-deco navy + metalická mosaz.</p></div>
+      <div class="setcard"><div class="setrow"><span class="ms" style="background:oklch(0.18 0.012 60)"></span><span class="ms" style="background:var(--gold-metal)"></span><span class="ms" style="background:oklch(0.9 0.02 80)"></span></div><div class="sn">madhouse</div><div class="sr">golden-hour</div><p class="sp">Golden-hour čerň + mosaz.</p></div>
+      <div class="setcard"><div class="setrow"><span class="ms" style="background:oklch(0.75 0.018 80)"></span><span class="ms" style="background:oklch(0.52 0.006 90)"></span><span class="ms" style="background:oklch(0.46 0.03 60)"></span></div><div class="sn">mysak.studio</div><div class="sr">architektonické neutrály</div><p class="sp">Tóny z architektury: RAL 7030 Stone Grey, FENIX Grigio Londra, Edel ZEAL Mink/Chihuahua, EC1 Barbican. Logo beze změny.</p></div>
+    </div>
+    <div class="setlabel" style="margin-top:34px;">Industry / Tech</div>
+    <div class="setgrid">
+      <div class="setcard"><div class="setrow"><span class="ms" style="background:oklch(0.66 0.19 47)"></span><span class="ms" style="background:oklch(0.2 0.006 260)"></span><span class="ms" style="background:oklch(0.96 0.004 90)"></span></div><div class="sn">PhotoRobot</div><div class="sr">kotva · dle manuálu</div><p class="sp">Pevně dle manuálu: oranžová #FF6000 + černá. Nic navíc — ocel sem nepatří.</p></div>
+      <div class="setcard"><div class="setrow"><span class="ms" style="background:oklch(0.66 0.19 47)"></span><span class="ms" style="background:oklch(0.2 0.006 260)"></span><span class="ms" style="background:oklch(0.62 0.012 250)"></span></div><div class="sn">uni-robot</div><div class="sr">sestra PhotoRobotu</div><p class="sp">Sestra → oranžová nesmí chybět. Sdílí oranžovou + černou, odliší se logem a ocelovým neutrálem.</p></div>
+      <div class="setcard"><div class="setrow"><span class="ms" style="background:oklch(0.95 0.003 100)"></span><span class="ms" style="background:oklch(0.82 0.004 250)"></span><span class="ms" style="background:oklch(0.66 0.19 47)"></span></div><div class="sn">sls.market</div><div class="sr">SLS · bílý prášek</div><p class="sp">Bílá vede (tiskne z bílého prášku), oranžová jen jiskra. Plná oranžová by byla proti smyslu.</p></div>
+      <div class="setcard"><div class="setrow"><span class="ms" style="background:oklch(0.62 0.012 250)"></span><span class="ms" style="background:oklch(0.66 0.19 47)"></span><span class="ms" style="background:oklch(0.3 0.006 260)"></span></div><div class="sn">sheetparts</div><div class="sr">plech</div><p class="sp">Ocel materiálu + oranžový proužek + antracit.</p></div>
+      <div class="setcard"><div class="setrow"><span class="ms" style="background:oklch(0.3 0.006 260)"></span><span class="ms" style="background:oklch(0.66 0.19 47)"></span><span class="ms" style="background:oklch(0.62 0.012 250)"></span></div><div class="sn">prototype.builders</div><div class="sr">prototypy</div><p class="sp">Surový obrobený blok: antracit + oranžová obrobená hrana (jako jeho logo). Alt: blueprintová modř.</p></div>
+      <div class="setcard"><div class="setrow"><span class="ms" style="background:oklch(0.3 0.006 260)"></span><span class="ms" style="background:#5B8DEF"></span><span class="ms" style="background:oklch(0.62 0.012 250)"></span></div><div class="sn">flowsmith.online</div><div class="sr">digitální řemeslo · automatizace</div><p class="sp">Workflow, AI a procesy — „smith" = kovář, jen materiál je digitální. Patří do Industry/Tech rejstříku (postoj, ne obor): antracit + ocel, akcent <strong>logo blue #5B8DEF</strong> (signál softwaru; oranžová zůstává fyzické výrobě).</p></div>
+    </div>
+    <div class="setlabel" style="margin-top:34px;">Sub-brand · Care</div>
+    <div class="setgrid">
+      <div class="setcard"><div class="setrow"><span class="ms" style="background:#DE0A96"></span><span class="ms" style="background:oklch(0.97 0.008 350)"></span><span class="ms" style="background:oklch(0.24 0.02 350)"></span></div><div class="sn">pink · PhotoRobot Medical</div><div class="sr">care · barva z poslání · zamčeno z produkce</div><p class="sp">Magenta rodina: <span class="mono">#DE0A96</span> plochy/akcenty · <span class="mono">#B9087D</span> text na bílé · <span class="mono">#F796D6</span> na tmavém · CMYK 0 96 5 0. Fialová <span class="mono">#8367AC</span> patří projektu Cinderella — nikdy nemíchat v jednom prvku. Care odchylky: text nikdy přes fotku (split layout), tinty 5–9 % povoleny pro callouty, „pink" vždy lowercase. Typografie už dle KH (track 0.025 · 300 · scaleY 0.94).</p></div>
+    </div>
+    <div class="setlabel" style="margin-top:34px;">Holding</div>
+    <div class="setgrid">
+      <div class="setcard"><div class="setrow"><span class="ms" style="background:oklch(0.2 0.006 260)"></span><span class="ms" style="background:oklch(0.97 0.002 260)"></span><span class="ms" style="background:oklch(0.62 0.008 260)"></span></div><div class="sn">KH-Group</div><div class="sr">holding · achromatický</div><p class="sp">Černá + bílá + šedé. Žlutá 100:28 jako heritage akcent.</p></div>
+    </div>
+    <p class="note" style="margin-top:24px;max-width:70ch;color:var(--graphite);">Jádro PhotoRobot rodiny je pevně dáno manuálem: <strong>oranžová #FF6000 + černá</strong> (PhotoRobot i sestra uni-robot — ocel sem nepatří). Výrobní jednotky (sls, sheetparts, prototype) vedou <strong>materiálem</strong> (bílý prášek, ocel, antracit) a oranžovou drží jako spojující akcent k rodině. K doladění z fotek: strizkov (dub); mysak má teď architektonické neutrály od vašich architektů (RAL 7030, FENIX Grigio Londra, Edel ZEAL, EC1 Barbican).</p>
+  </div>
+</section>
+
+<!-- ===================== 4.7 STEJNÁ ENERGIE ===================== -->
+<section data-screen-label="Stejná energie">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker"><span class="num">4.7</span> &nbsp;Plná síla v každém segmentu</span>
+      <h2>Kvalita není výsadou prémia</h2>
+      <p class="lead">Každý projekt skupiny — od dostupného bydlení po medicínu — komunikuje s plným přesvědčením a stejnou řemeslnou úrovní. Liší se svět, ne kvalita: pro svého zákazníka je každý z nich první volba.</p>
+    </div>
+    <div class="tier-row">
+      <div class="tier" style="background:oklch(0.2 0.025 150);">
+        <div class="tb-eyebrow">strelnicna · rezidenční bydlení</div>
+        <h3>Váš první<br><b style="color:oklch(0.82 0.16 128);">domov</b>.</h3>
+        <div class="tb-foot">rezidenční bydlení</div>
+      </div>
+      <div class="tier" style="background:oklch(0.17 0.004 250);">
+        <div class="tb-eyebrow" style="color:oklch(0.7 0.14 47);">Industry · sheetparts</div>
+        <h3>Plech na<br><b style="color:var(--industry);">míru</b>.</h3>
+        <div class="tb-foot">kalkulace za 60 sekund</div>
+      </div>
+      <div class="tier" style="background:oklch(0.22 0.05 264);">
+        <div class="tb-eyebrow">bestpenthouse · art-deco rezidence</div>
+        <h3>Klenot<br><b style="background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent;">Prahy</b>.</h3>
+        <div class="tb-foot">1 197 m² nad střechami</div>
+      </div>
+    </div>
+    <p class="note" style="margin-top:20px;max-width:66ch;color:var(--graphite);">Sílu nedělá barva, ale přesvědčení: velkorysé měřítko, jeden jistý akcent, klidná kompozice. Každý segment mluví naplno ve svém rejstříku — luxus klidem, dostupné bydlení svěžestí, průmysl energií.</p>
+  </div>
+</section>
+
+<!-- ===================== 05 LOGOS ===================== -->
+<section data-screen-label="Nová loga">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker"><span class="num">05</span> &nbsp;Loga</span>
+      <h2>Loga výrobních značek — platná verze</h2>
+      <p class="lead">Schváleno. Obě loga nesou skupinový obrobený roh a oranžovou průmyslové rodiny (#FF6000 · Pantone 1655 C · C0 M75 Y100 K0). Ke stažení v balíčku <span class="mono">logos/</span> — SVG vektory + PNG 1024 px, světlá i tmavá varianta.</p>
+    </div>
+
+    <div class="logos-grid">
+      <div class="logocard" style="--ac2:var(--industry);">
+        <div class="lc-stage">
+          <div class="mark-sheet"><i class="top"></i><i class="mid"></i><i></i></div>
+          <div class="logo-word">sheet<span class="lac">parts</span></div>
+        </div>
+        <div class="lc-in">
+          <h4>sheetparts.com</h4>
+          <div class="lc-u">vrstvené plechy · odsazený stoh · ✓ schváleno</div>
+          <p>Reagováno na vaši poznámku: symetrické pruhy s obarveným prostředním evokovaly rádio / ekvalizér. Tady jsou plechy <strong>odsazené do schodů</strong> (fyzický stoh, ne UI) a barví se <strong>horní</strong> — právě vyráběný díl „na vrchu hromady". Logika je čititelnější než barvit střed.</p>
+          <div class="mono" style="font-size:11px;letter-spacing:.1em;margin-top:14px;">STÁHNOUT: <a href="logos/sheetparts-mark-ink.svg" download style="color:var(--industry);text-decoration:none;">SVG ink ↓</a> · <a href="logos/sheetparts-mark-white.svg" download style="color:var(--industry);text-decoration:none;">SVG white ↓</a> · <a href="logos/sheetparts-mark-ink-1024.png" download style="color:var(--industry);text-decoration:none;">PNG ↓</a></div>
+        </div>
+      </div>
+
+      <div class="logocard" style="--ac2:var(--industry);">
+        <div class="lc-stage">
+          <div class="mark-proto fill"></div>
+          <div class="logo-word">prototype<span class="lac">.builders</span></div>
+        </div>
+        <div class="lc-in">
+          <h4>prototype.builders</h4>
+          <div class="lc-u">čtverec · jeden obrobený roh · ✓ schváleno</div>
+          <p>Surový blok s jednou zaoblenou hranou = polotovar v procesu obrábění. Přesně ten „obrobený roh", který zároveň povyšujeme na podpis celé skupiny — proto je nejsilnějším poutem k rodině.</p>
+          <div class="mono" style="font-size:11px;letter-spacing:.1em;margin-top:14px;">STÁHNOUT: <a href="logos/prototype-mark-orange.svg" download style="color:var(--industry);text-decoration:none;">SVG orange ↓</a> · <a href="logos/prototype-mark-outline-ink.svg" download style="color:var(--industry);text-decoration:none;">SVG obrys ↓</a> · <a href="logos/prototype-mark-orange-1024.png" download style="color:var(--industry);text-decoration:none;">PNG ↓</a></div>
+        </div>
+      </div>
+
+      <div class="logocard" style="grid-column:1 / -1;">
+        <div class="lc-stage" style="position:relative;overflow:hidden;">
+          <canvas data-flow="ribbon" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;"></canvas>
+          <div style="position:relative;z-index:2;display:flex;align-items:baseline;">
+            <span class="fs-word"><span>flow</span><span class="smith">smith</span><span class="fs-dot"></span><span class="online">online</span></span>
+          </div>
+        </div>
+        <div class="lc-in">
+          <h4>flowsmith.online</h4>
+          <div class="lc-u">wordmark · heartbeat tečka · logo blue #5B8DEF</div>
+          <p>Softwarový svět: wordmark Titillium 600, „smith" v <strong>logo blue #5B8DEF</strong>, „online" tenké. Tepající tečka (heartbeat) mezi slovy = živý puls automatizace; za textem rytá „stuha" na canvasu. Akcent oblouku navazuje na obrobený roh skupiny.</p>
+          <div class="mono" style="font-size:11px;letter-spacing:.1em;margin-top:14px;color:var(--graphite);">@keyframes beat · 2.4s · scale 1→1.6→1.05→1.4→1 · pod prefers-reduced-motion vypnuto</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 06 ENDORSEMENT ===================== -->
+<section class="brands" data-screen-label="Endorsement podpis">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker"><span class="num">06</span> &nbsp;Podpis skupiny</span>
+      <h2>„člen KH-Group"</h2>
+      <p class="lead">Tichý, neutrální podpis v patičce každého webu i v dokumentech. Monogram KH v obrobeném rohu — funguje na světlém i tmavém pozadí, nikdy nesoupeří s logem dané značky.</p>
+    </div>
+
+    <div class="endo">
+      <div class="e-card">
+        <div class="e-cap">Na světlém pozadí · váš znak v obrobeném rohu</div>
+        <div class="lockup">
+          <div class="lk-mark"><svg viewBox="1130 800 1260 900" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="KH"><g transform="matrix(4.16667,0,0,4.16667,261.577,49.4367)"><g transform="matrix(1,0,0,1,256.329,274.17)"><path d="M0,-83.008L0,106.219L-34.816,106.219L-34.816,-83.008L0,-83.008Z" fill="currentColor"/></g><g transform="matrix(1,0,0,1,383.046,304.447)"><path d="M0,-37.343L76.952,-37.343L76.952,-113.285L111.774,-113.285L111.774,75.942L76.952,75.942L76.952,-5.302L0,-5.302" fill="currentColor"/></g><g transform="matrix(1,0,0,1,387.995,380.389)"><path d="M0,-189.227L-40.622,-189.227L-94.752,-107.226L-103.298,-94.614L-94.752,-82.001L-40.622,0L0,0L-63.721,-94.614L0,-189.227Z" fill="currentColor"/></g></g></svg></div>
+          <div class="lk-txt"><b>KH-Group</b><span>člen skupiny</span></div>
+        </div>
+        <div class="sig-inline"><span class="sq"></span>člen KH-Group</div>
+      </div>
+      <div class="e-card dark">
+        <div class="e-cap" style="color:oklch(0.66 0.01 260)">Na tmavém pozadí · inverzně</div>
+        <div class="lockup">
+          <div class="lk-mark"><svg viewBox="1130 800 1260 900" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="KH"><g transform="matrix(4.16667,0,0,4.16667,261.577,49.4367)"><g transform="matrix(1,0,0,1,256.329,274.17)"><path d="M0,-83.008L0,106.219L-34.816,106.219L-34.816,-83.008L0,-83.008Z" fill="currentColor"/></g><g transform="matrix(1,0,0,1,383.046,304.447)"><path d="M0,-37.343L76.952,-37.343L76.952,-113.285L111.774,-113.285L111.774,75.942L76.952,75.942L76.952,-5.302L0,-5.302" fill="currentColor"/></g><g transform="matrix(1,0,0,1,387.995,380.389)"><path d="M0,-189.227L-40.622,-189.227L-94.752,-107.226L-103.298,-94.614L-94.752,-82.001L-40.622,0L0,0L-63.721,-94.614L0,-189.227Z" fill="currentColor"/></g></g></svg></div>
+          <div class="lk-txt"><b>KH-Group</b><span>člen skupiny</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 07 GOVERNANCE ===================== -->
+<section data-screen-label="Správa portfolia">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker"><span class="num">07</span> &nbsp;Správa portfolia</span>
+      <h2>Co zůstává, co utlumit</h2>
+      <p class="lead">Aby loga na kh-group.eu přestala být „divoká směsice" — jasné tři police. Aktivní značky dostanou systém, servisní zůstávají tiché, dožívající odejdou s grácií.</p>
+    </div>
+
+    <div class="gov">
+      <div class="govcol">
+        <div class="g-h"><span class="gdot" style="background:var(--industry)"></span><h4>Aktivní</h4><span class="gc">systém + akcent</span></div>
+        <ul>
+          <li>PhotoRobot .com / .ai <span>tech</span></li>
+          <li>uni-robot.com <span>tech</span></li>
+          <li>sls.market <span>tech</span></li>
+          <li>sheetparts.com <span>tech</span></li>
+          <li>prototype.builders <span>tech</span></li>
+          <li>bestpenthouse.cz <span>real</span></li>
+          <li>strizkov.apartments <span>real</span></li>
+          <li>strelnicna.cz <span>real</span></li>
+          <li>mysak.studio <span>logo OK</span></li>
+          <li>madhouse.vip <span>real</span></li>
+        </ul>
+      </div>
+      <div class="govcol">
+        <div class="g-h"><span class="gdot" style="background:transparent;border:2px solid var(--line);box-sizing:border-box;"></span><h4>Servisní / tiché</h4><span class="gc">bez akcentu</span></div>
+        <ul>
+          <li>improtech <span>pro PhotoRobot</span></li>
+          <li>consignia <span>doznívá</span></li>
+          <li>unitechnic <span>doznívá</span></li>
+          <li>industris <span>doznívá</span></li>
+          <li>Personex.cz <span>jen slušivé minimum</span></li>
+        </ul>
+      </div>
+      <div class="govcol">
+        <div class="g-h"><span class="gdot" style="background:oklch(0.6 0.13 25)"></span><h4>Utlumit / rozloučit</h4><span class="gc">odejít s grácií</span></div>
+        <ul>
+          <li>Motorline magazín <span>necháme dožít</span></li>
+          <li>uni-max <span>→ ZAFIDO, nostalgie</span></li>
+          <li>Slider „nářadí e-shop" <span>pryč</span></li>
+          <li>Slider „elektromobilita" <span>pryč</span></li>
+          <li>Nabíječka <span>konec měsíce</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 08 EKOSYSTÉMOVÉ KONVENCE ===================== -->
+<section data-screen-label="Ekosystémové konvence">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker"><span class="num">08</span> &nbsp;Ekosystémové konvence</span>
+      <h2>Co už žije na webech — teď závazně</h2>
+      <p class="lead">Na photorobot.io, cases, academy, CPQ i PULSE už zárodky standardu běží: verze v patičce, šipky, mono štítky, KH podpis. Tady je kodifikujeme, aby je nesl každý web skupiny — i exchange, pulse, sheetparts a prototype, kterým design zatím chybí.</p>
+    </div>
+
+    <div class="rules">
+      <div class="rule">
+        <div class="r-k">01 — Patička systému</div>
+        <div class="r-spec mono">© entita · verze + build UTC · cross-linky</div>
+        <div class="r-body">
+          <p>Každý web/aplikace: vlevo <strong>© rok + provozní entita</strong>, uprostřed <strong>verze a build</strong> v mono (důvěra inženýrů), vpravo <strong>cross-linky</strong> na sesterské weby. Už žije na .io, cases, pulse, CPQ — sjednocujeme formát.</p>
+        </div>
+        <div class="r-demo"><span class="mono" style="font-size:11px;color:var(--graphite);letter-spacing:.06em;">v0.25.0 · 2026-06-11 11:00 UTC&nbsp;&nbsp;·&nbsp;&nbsp;photorobot.com ↗</span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">02 — Šipky odkazů</div>
+        <div class="r-spec mono">→ zůstávám · ↗ opouštím web</div>
+        <div class="r-body">
+          <p><strong>→</strong> = akce nebo posun v rámci téhož webu (OPEN CASE →, posun po stránce). <strong>↗</strong> = odchod jinam (PHOTOROBOT.COM ↗, manufacturer page). Uživatel pozná předem, kam klik vede. Už zavedeno na cases a CPQ.</p>
+        </div>
+        <div class="r-demo"><span class="mono" style="font-size:12px;letter-spacing:.12em;color:var(--industry);">OTEVŘÍT CASE →</span><span class="mono" style="font-size:12px;letter-spacing:.12em;color:var(--graphite);">PHOTOROBOT.COM ↗</span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">03 — Text přes foto / video</div>
+        <div class="r-spec mono">scrim overlay · žádné stíny pod fonty</div>
+        <div class="r-body">
+          <p>Čitelnost nad fotografií či videem řeší <strong>scrim</strong> (tichý tmavý gradient přes podklad), ne komplikované text-shadow vrstvy (.io dnes). Písmo zůstává čisté, podklad se ztiší — stejná technika všude.</p>
+        </div>
+        <div class="r-demo" style="background:linear-gradient(180deg,rgba(10,12,20,.62),rgba(10,12,20,.25)),repeating-linear-gradient(135deg,oklch(0.5 0.04 264) 0 2px,oklch(0.4 0.05 264) 2px 12px);"><span style="color:#fff;font-weight:200;font-size:24px;">Čistý titulek na scrimu</span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">04 — KH podpis</div>
+        <div class="r-spec mono">aplikace: monogram vpravo dole · weby: endorsement v patičce</div>
+        <div class="r-body">
+          <p>Interní a aplikační systémy (CPQ, PULSE) nesou <strong>KH monogram vpravo dole</strong> — už zavedeno v CPQ. Marketingové weby nesou „člen KH-Group" endorsement v patičce. Nikdy nesoupeří s logem značky.</p>
+        </div>
+        <div class="r-demo" style="justify-content:flex-end;"><svg viewBox="1130 800 1260 900" xmlns="http://www.w3.org/2000/svg" style="height:22px;color:var(--ink);" aria-label="KH"><g transform="matrix(4.16667,0,0,4.16667,261.577,49.4367)"><g transform="matrix(1,0,0,1,256.329,274.17)"><path d="M0,-83.008L0,106.219L-34.816,106.219L-34.816,-83.008L0,-83.008Z" fill="currentColor"/></g><g transform="matrix(1,0,0,1,383.046,304.447)"><path d="M0,-37.343L76.952,-37.343L76.952,-113.285L111.774,-113.285L111.774,75.942L76.952,75.942L76.952,-5.302L0,-5.302" fill="currentColor"/></g><g transform="matrix(1,0,0,1,387.995,380.389)"><path d="M0,-189.227L-40.622,-189.227L-94.752,-107.226L-103.298,-94.614L-94.752,-82.001L-40.622,0L0,0L-63.721,-94.614L0,-189.227Z" fill="currentColor"/></g></g></svg></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">05 — Mono štítky</div>
+        <div class="r-spec mono">DM Mono · uppercase · +0.16–0.22em</div>
+        <div class="r-body">
+          <p>Eyebrow, breadcrumbs, spec údaje, verze, NDA badge — vždy mono, uppercase, rozpálené. Drží inženýrský charakter napříč marketingem i aplikacemi (cases, academy, exchange, sheetparts už takhle mluví).</p>
+        </div>
+        <div class="r-demo"><span class="mono" style="font-size:11px;letter-spacing:.2em;color:var(--graphite);">INSTANT QUOTE · CUSTOM MANUFACTURING</span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">06 — Ke stažení</div>
+        <div class="r-spec mono">brandmanual.kh-group.eu → versovaný balíček</div>
+        <div class="r-body">
+          <p>Publikovaný manuál nabízí <strong>kartu „Ke stažení"</strong>: ZIP s tokens.css, texturami, logy a README — vždy ve verzi shodné s manuálem. Designéři a dodavatelé čerpají odsud, nikdy „od oka". Verze balíčku = verze v patičce.</p>
+        </div>
+        <div class="r-demo"><span class="mono" style="font-size:12px;letter-spacing:.12em;color:var(--industry);">KH-DESIGN-KIT v0.9.ZIP ↓</span></div>
+      </div>
+      <div class="rule">
+        <div class="r-k">07 — Adopce po úrovních, ne diktát</div>
+        <div class="r-spec mono">A nové weby · B spravované platformy · C neměnit</div>
+        <div class="r-body">
+          <p>Standard se zavádí podle rizika, ne plošně. <strong>A — plný standard:</strong> nové a vlastní weby (sheetparts, prototype, exchange, pulse). <strong>B — lehký dotyk:</strong> profesionálně spravované platformy (photorobot.com na Webflow, strizkov…) přebírají jen barvy/typo, a výhradně nástroji té platformy — žádné vkládané CSS. <strong>C — neměnit:</strong> stabilní produkční systémy se nedotýkají, dokud není plán a rollback. Pilot vždy na jedné stránce; co se osvědčí, jde dál.</p>
+        </div>
+        <div class="r-demo"><span class="mono" style="font-size:11px;letter-spacing:.12em;color:var(--industry);">A · PLNÝ</span><span class="mono" style="font-size:11px;letter-spacing:.12em;color:var(--graphite);">B · TOKENS ONLY</span><span class="mono" style="font-size:11px;letter-spacing:.12em;color:var(--mute);">C · NEDOTÝKAT</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 09 CODEX BAREV ===================== -->
+<section class="brands" data-screen-label="Codex barev">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker"><span class="num">09</span> &nbsp;Codex</span>
+      <h2>Pravidla barev</h2>
+      <p class="lead">Stejný formát jako typografie — závazná pravidla, ze kterých se generuje tokens.css. Každé má své „kde ano / kde ne".</p>
+    </div>
+
+    <div class="rules">
+      <div class="rule">
+        <div class="r-k">01 — Neutrály jsou základ</div>
+        <div class="r-spec mono">ink · paper · graphite · line — 90 % každé stránky</div>
+        <div class="r-body">
+          <p>Každý web stojí na achromatickém základu: skoro-černá <span class="mono">ink</span>, teplá bílá <span class="mono">paper</span>, grafit pro sekundární text. Barva je vždy menšina plochy — proto působí draze.</p>
+        </div>
+        <div class="r-demo"><span style="width:34px;height:34px;border-radius:0 9px 0 0;background:var(--ink);"></span><span style="width:34px;height:34px;border-radius:0 9px 0 0;background:var(--paper);border:1px solid var(--line);"></span><span style="width:34px;height:34px;border-radius:0 9px 0 0;background:var(--graphite);"></span><span style="width:34px;height:34px;border-radius:0 9px 0 0;background:var(--paper-2);border:1px solid var(--line);"></span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">02 — Jeden akcent na web</div>
+        <div class="r-spec mono">obor → materiál → barva · nikdy víc akcentů</div>
+        <div class="r-body">
+          <p>Každá značka má jediný akcent odvozený z materiálu oboru (viz 4.6): ocel plechu, bílý prášek, dub, mosaz, oranžová robotů. Druhý akcent na stránce neexistuje — tím padá riziko „omalovánek".</p>
+        </div>
+        <div class="r-demo"><span style="width:34px;height:34px;border-radius:0 9px 0 0;background:var(--industry);"></span><span class="mono" style="font-size:11px;color:var(--graphite);">+ ink + paper = celý web</span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">03 — Oranžová patří průmyslu</div>
+        <div class="r-spec mono">#FF6000 · výhradně PhotoRobot rodina a výrobní jednotky</div>
+        <div class="r-body">
+          <p>Oranžová je signál průmyslové větve — PhotoRobot (kotva, dle vlastního manuálu), uni-robot, a jako akcentní jiskra u sls / sheetparts / prototype. Na realitních webech a holdingu se nevyskytuje.</p>
+        </div>
+        <div class="r-demo"><span style="width:34px;height:34px;border-radius:0 9px 0 0;background:#FF6000;"></span><span class="mono" style="font-size:11px;color:var(--graphite);">#FF6000 · oklch(0.66 0.19 47)</span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">04 — Materiálové neutrály</div>
+        <div class="r-spec mono">ocel (industry) · kámen (reality)</div>
+        <div class="r-body">
+          <p>Dvě tlumené rodiny mezi černou a bílou: <strong>ocelová šeď</strong> pro průmysl (barva plechu a strojů), <strong>architektonický kámen</strong> pro reality (RAL 7030, Grigio Londra, ZEAL, Barbican). Nesou plochy a pozadí, ne akcenty.</p>
+        </div>
+        <div class="r-demo"><span style="width:34px;height:34px;border-radius:0 9px 0 0;background:oklch(0.62 0.012 250);"></span><span style="width:34px;height:34px;border-radius:0 9px 0 0;background:oklch(0.44 0.007 250);"></span><span style="width:34px;height:34px;border-radius:0 9px 0 0;background:oklch(0.78 0.018 80);"></span><span style="width:34px;height:34px;border-radius:0 9px 0 0;background:oklch(0.52 0.006 90);"></span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">05 — Mosaz = textura</div>
+        <div class="r-spec mono">--gold-grad (text) · --gold-metal (plochy) · jen tmavý/střední podklad</div>
+        <div class="r-body">
+          <p>Luxusní mosaz je vždy broušená textura, nikdy CSS gradient ani plochý tón. Text přes <span class="mono">background-clip:text</span> jen na tmavém či středním podkladu. V tisku ražba / fólie, nikdy CMYK náhrada.</p>
+        </div>
+        <div class="r-demo" style="background:oklch(0.22 0.05 264);"><span style="background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;font-weight:700;font-size:28px;">MOSAZ</span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">06 — Kontrast a čitelnost</div>
+        <div class="r-spec mono">body text ≥ 4.5:1 · akcenty nikdy jako text na bílé</div>
+        <div class="r-body">
+          <p>Oranžová, žlutá ani mosaz nejsou barvy textu na světlém podkladu — tam slouží jen jako plochy, linky a detaily. Text na akcentní ploše je vždy tmavý (ink). Běžný text drží WCAG AA (≥ 4.5:1).</p>
+        </div>
+        <div class="r-demo"><span style="background:var(--industry);color:oklch(0.18 0.02 47);font-weight:600;font-size:13px;padding:8px 14px;border-radius:0 9px 0 0;">tmavý text na akcentu ✓</span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">07 — Každá barva má plnou specifikaci</div>
+        <div class="r-spec mono">oklch (zdroj) → HEX/RGB (web) → Pantone/CMYK (tisk)</div>
+        <div class="r-body">
+          <p>Řídicí zápis je oklch; z něj se odvozuje HEX/RGB pro web a Pantone/CMYK pro tisk, polepy a dveře (mysak!). Žádná barva bez kompletní trojice nejde do manuálu. Žlutá KH: <span class="mono">#FFB800 · Pantone ~1235 C · Y100/M28</span> — heritage akcent; holding je achromatický.</p>
+        </div>
+        <div class="r-demo"><span class="mono" style="font-size:11px;color:var(--graphite);letter-spacing:.04em;">oklch(0.66 0.19 47) = #FF6000 = Pantone 1655 C = C0 M75 Y100 K0</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== 10 INTEGRAČNÍ VZORY ===================== -->
+<section data-screen-label="Integrační vzory">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="kicker"><span class="num">10</span> &nbsp;Integrační vzory</span>
+      <h2>Co weby spojuje pod kapotou</h2>
+      <p class="lead">Vzory ověřené na reálných webech (support.photorobot, flowsmith). Společné mechaniky — lokalizace, rezervace, konektory — řešíme jednou a sdílíme, ne vymýšlíme na každém webu znovu.</p>
+    </div>
+
+    <div class="rules">
+      <div class="rule">
+        <div class="r-k">01 — Lokalizace přes data-atributy</div>
+        <div class="r-spec mono">data-i18n="key" · data-i18n-ph · slovník v JS</div>
+        <div class="r-body">
+          <p>EN je default přímo v markupu; ostatní jazyky ve slovníku <span class="mono">I18N.cs = {…}</span>. Element nese <span class="mono">data-i18n</span> (text), <span class="mono">data-i18n-ph</span> (placeholder), <span class="mono">data-i18n-html</span> (bohatý obsah). Přepínač mění i endorsement („člen KH-Group" ↔ „a KH-Group company"). Stejný mechanismus na všech webech — pro RTL jen přidat <span class="mono">dir="rtl"</span> + Noto.</p>
+        </div>
+        <div class="r-demo"><span class="mono" style="font-size:11px;color:var(--graphite);letter-spacing:.04em;">&lt;h1 data-i18n="hero.title"&gt;Sheet-metal parts&lt;/h1&gt;</span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">02 — Rezervace &amp; platba = Cal.com</div>
+        <div class="r-spec mono">jeden event type / tier · Stripe uvnitř · voucher → €0</div>
+        <div class="r-body">
+          <p>Žádný vlastní rezervační ani platební systém. Cal.com embed, jeden event type na úroveň (např. Emergency / Priority / Standard, 60 min), platba Stripe běží uvnitř Cal.com. Slevový voucher = €0 varianta. V návrhu je blok jen vizuální zástupka — produkce nahradí reálným embedem.</p>
+        </div>
+        <div class="r-demo"><span class="mono" style="font-size:11px;color:var(--industry);letter-spacing:.04em;">CAL.COM · EMERGENCY €700 · PRIORITY €500 · STANDARD €300</span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">03 — Konektor přes URL parametry</div>
+        <div class="r-spec mono">?ticket=… &amp;specialist=… &amp;tier=…</div>
+        <div class="r-body">
+          <p>Stránka čte stav z URL a předvyplní se: <span class="mono">ticket</span> doplní pole, <span class="mono">specialist</span> zobrazí banner přiřazeného inženýra, <span class="mono">tier</span> předvybere urgenci. Umožní hloubkové prolinkování z e-mailů, CRM i jiných webů skupiny bez backendu navíc.</p>
+        </div>
+        <div class="r-demo"><span class="mono" style="font-size:11px;color:var(--graphite);letter-spacing:.04em;">/support?ticket=5075&amp;specialist=robotics&amp;tier=priority</span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">04 — Formuláře přes sdílený endpoint</div>
+        <div class="r-spec mono">forms.flowsmith.online · jeden POST cíl skupiny</div>
+        <div class="r-body">
+          <p>Poptávkové a kontaktní formuláře míří na jeden skupinový endpoint (<span class="mono">forms.flowsmith.online/…</span>) s ustálenými poli: <span class="mono">company, name, email, phone, country, message</span>. Do napojení backendu submit ukáže thank-you stav (žádná slepá chyba). Jeden sběr, jedno místo správy.</p>
+        </div>
+        <div class="r-demo"><span class="mono" style="font-size:11px;color:var(--graphite);letter-spacing:.04em;">company · name · email · phone · country · message</span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">05 — Externí nástroje hostuj lokálně</div>
+        <div class="r-spec mono">žádné hot-linky na cizí domény</div>
+        <div class="r-body">
+          <p>Loga a assety třetích stran (Splashtop, partneři) ukládat na vlastní doménu, ne načítat z cizí (lekce: logo z <span class="mono">support.photorobot.io</span> zmizelo, když se zdroj změnil). Odkazy na nástroje (Splashtop SOS EU, Cal.com) jsou explicitní a kontrolované; co je vidět, hostíme sami.</p>
+        </div>
+        <div class="r-demo"><span class="mono" style="font-size:11px;color:var(--graphite);letter-spacing:.04em;">assets/splashtop.svg ✓ &nbsp; ne: support.photorobot.io/… ✗</span></div>
+      </div>
+
+      <div class="rule">
+        <div class="r-k">06 — Živé detaily „stroj žije"</div>
+        <div class="r-spec mono">hodiny Prague/NY · heartbeat tečka · canvas stuha</div>
+        <div class="r-body">
+          <p>Drobné živé prvky dávají inženýrským webům puls: živé hodiny dvou poboček (Prague / New York), tepající tečka v logu, rytá „stuha" na <span class="mono">&lt;canvas&gt;</span>. Vždy jen transform/opacity a vždy pod <span class="mono">prefers-reduced-motion</span>. Decentní signál provozu, ne ozdoba.</p>
+        </div>
+        <div class="r-demo"><span class="mono" style="font-size:11px;color:var(--graphite);letter-spacing:.04em;">PRG 14:32 · NYC 08:32 &nbsp; <span style="color:var(--industry)">● live</span></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FOOTER / NEXT ===================== -->
+<footer class="foot" data-screen-label="Další kroky">
+  <div class="wrap">
+    <span class="kicker" style="color:oklch(0.72 0.008 260)">Další kroky</span>
+    <h3 style="margin-top:18px;">Kam s tím dál</h3>
+    <p>Tohle je mapa systému, ne finále. Pár věcí vědomě parkuji: <strong style="color:var(--paper)">KH „tříprvkové" logo je vsazené beze změny</strong> jako podpis skupiny, barvy realitních log <strong style="color:var(--paper)">doladíme podle obsahu</strong> webů (foto + text napoví) a finální odstíny dodáme i v HEX / RGB / Pantone.</p>
+    <div class="next">
+      <div class="nx"><div class="nx-n">Krok 1</div><p>Reality: architektonický neutrál + akcent z charakteru místa; dub (strizkov) a mysak doladit z fotek.</p></div>
+      <div class="nx"><div class="nx-n">Krok 2</div><p>DNA kit: typografie, mřížka, tokeny, endorsement — k použití na webech.</p></div>
+      <div class="nx"><div class="nx-n">Krok 3</div><p>První web naživo — návrh redesignu (bestpenthouse) nebo nový kalkulátor (sls / sheetparts).</p></div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

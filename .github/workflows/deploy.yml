@@ -30,6 +30,7 @@ jobs:
     outputs:
       www: ${{ steps.filter.outputs.www }}
       stox: ${{ steps.filter.outputs.stox }}
+      brandmanual: ${{ steps.filter.outputs.brandmanual }}
     steps:
       - uses: actions/checkout@v5
       - uses: dorny/paths-filter@v3
@@ -40,6 +41,8 @@ jobs:
               - 'apps/www/**'
             stox:
               - 'apps/stox/**'
+            brandmanual:
+              - 'apps/brandmanual/**'
 
   www:
     name: Deploy website (Pages)
@@ -101,6 +104,37 @@ jobs:
           else
             echo "apps/stox has no wrangler.toml yet — nothing to deploy, skipping."
           fi
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: e23e7f2a089411193e86a3f444cf0954
+
+  brandmanual:
+    name: Deploy brand manual (Pages — private, basic-auth)
+    needs: changes
+    if: ${{ needs.changes.outputs.brandmanual == 'true' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Create Pages project if missing (idempotent)
+        run: npx wrangler@4 pages project create kh-brandmanual --production-branch=main 2>/dev/null || true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: e23e7f2a089411193e86a3f444cf0954
+      - name: wrangler pages deploy
+        run: npx wrangler@4 pages deploy apps/brandmanual --project-name=kh-brandmanual --branch=main
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: e23e7f2a089411193e86a3f444cf0954
+      - name: Attach custom domain (registers brandmanual.kh.group; DNS CNAME added by hand)
+        run: |
+          code=$(curl -s -o /tmp/r.json -w "%{http_code}" -X POST \
+            "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/kh-brandmanual/domains" \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" -H "Content-Type: application/json" \
+            --data '{"name":"brandmanual.kh.group"}')
+          echo "== brandmanual.kh.group -> HTTP ${code} =="; cat /tmp/r.json; echo
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: e23e7f2a089411193e86a3f444cf0954
