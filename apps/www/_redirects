@@ -1,0 +1,2 @@
+# kh.group is canonical; send www → apex (301)
+https://www.kh.group/* https://kh.group/:splat 301
