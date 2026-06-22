@@ -2,6 +2,20 @@
 
 Newest first. UTC timestamps.
 
+## 2026-06-22 — kh.group LIVE (apps/www on Cloudflare Pages)
+- apps/www is now the claude-design kh.group site v1 (single index.html + world-dots.svg,
+  zero-build); the Webflow import is retired to git history + reference/.
+- Automatic git→CF deploy: push apps/www → GitHub Actions → CF Pages project `kh-www`
+  (auto-created) → custom domains kh.group + www attached via the CF API.
+- Security model: the CI/deploy token is **DNS-less** (Cloudflare Pages + Workers +
+  Workers Routes + Zone:Read). DNS — the highest blast-radius surface (MX/email) — is a
+  deliberate, human-gated action and is NEVER done from CI. The apex + www CNAMEs to
+  kh-www.pages.dev were added by hand.
+- www → apex 301 via apps/www/_redirects. kh-group.eu and its Google Workspace email
+  were not touched.
+- Pending: mobile polish (with design); brand manual at brandmanual.kh.group (noindex);
+  stox engine (awaiting design's face).
+
 ## 2026-06-21 — imported kh-group.eu site into apps/www
 - Imported the Webflow export from the `www-kh-group` repo into `apps/www`
   (index.html, assets/, _headers, _redirects, robots/sitemap/llms/manifest) — the
