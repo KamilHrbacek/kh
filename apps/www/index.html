@@ -11,7 +11,7 @@
 <script src="brand-tokens.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
-:root{--ink:#15150f;--paper:#f4f2ec;--paper-2:#eceae3;--mute:#8a8a82;--line:#dcd9d1;--accent:#FF6000;}
+:root{--ink:#15150f;--paper:#f4f2ec;--paper-2:#eceae3;--mute:#8a8a82;--line:#dcd9d1;--accent:#FF6000;--g:clamp(30px,7vw,84px);}
 html,body{height:100%;}
 body{background:var(--paper);color:var(--ink);font-family:'Titillium Web',system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
 .mono{font-family:'DM Mono',monospace;}
@@ -96,7 +96,17 @@ body.navopen .brand .m path{fill:var(--paper);}
 .corow .role{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--mute);align-self:center;}
 .corow.is-holding .role,.corow.is-founder .role,.corow.is-divested .role{color:var(--accent);}
 .corow .runs{font-family:'DM Mono',monospace;font-size:12px;color:var(--ink);opacity:.72;align-self:center;}
-@media(max-width:760px){.cohead{display:none;}.corow{grid-template-columns:1fr;gap:5px;padding:18px 0;}}
+@media(max-width:760px){
+  .cohead{display:none;}
+  /* table collapses to a stacked card per row on mobile → reattach the column labels
+     inline, otherwise the Reg. No. reads as a bare clump of digits with no context. */
+  .corow{grid-template-columns:1fr;gap:4px;padding:18px 0;}
+  .corow .con{font-size:20px;margin-bottom:4px;}
+  .corow .ico{color:var(--ink);opacity:.85;}
+  .corow .ico::before,.corow .runs::before{display:block;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--mute);opacity:.85;margin-bottom:1px;}
+  .corow .ico::before{content:"Reg. No.";}
+  .corow .runs::before{content:"Operates";}
+}
 
 /* contact */
 .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:60px;padding:20px 0 120px;border-top:1px solid var(--line);margin-top:24px;}
@@ -164,10 +174,10 @@ body.navopen .brand .m path{fill:var(--paper);}
   .cgrid{grid-template-columns:1fr;gap:40px;}
   .cform .frow{grid-template-columns:1fr;gap:18px;}
   .bgrid{grid-template-columns:1fr;}
-  /* content shares the header gutter on mobile: drop the desktop's extra inset
-     (the +clamp(74..104px) baked into .wrap) so the card rail + all content hang on the
-     SAME left/right verticals as the logo and the hamburger. One gutter, top to bottom. */
-  .wrap{padding-left:clamp(30px,7vw,84px);padding-right:clamp(30px,7vw,84px);}
+  /* LEFT & RIGHT BANDS reserved for the header marks — content never enters them, so it
+     can't collide with the logo. left band = edge-zone(--g) + logo(46px) + inner-zone(--g);
+     right band = the same around the hamburger(30px). The page flows continuously between. */
+  .wrap{padding-left:calc(var(--g)*2 + 46px);padding-right:calc(var(--g)*2 + 30px);}
   .locgrid{grid-template-columns:1fr;gap:22px;}
   .sec-head{padding:120px 0 32px;}
   .cgrid,.bmlink{padding-bottom:90px;}
