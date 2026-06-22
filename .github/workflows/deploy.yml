@@ -76,6 +76,31 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: e23e7f2a089411193e86a3f444cf0954
+      - name: Ensure apex + www CNAMEs → kh-www.pages.dev (idempotent, proxied) — email/MX untouched
+        run: |
+          ZONE=kh.group
+          TARGET=kh-www.pages.dev
+          api="https://api.cloudflare.com/client/v4"
+          zid=$(curl -s "${api}/zones?name=${ZONE}" -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" | jq -r '.result[0].id // empty')
+          if [ -z "${zid}" ]; then
+            echo "ERROR: could not resolve zone id for ${ZONE} — token likely missing Zone:Read. Add Zone:Read + DNS:Edit to the CF token."; exit 1
+          fi
+          echo "zone id: ${zid}"
+          for name in "${ZONE}" "www.${ZONE}"; do
+            n=$(curl -s "${api}/zones/${zid}/dns_records?name=${name}&type=CNAME" -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" | jq -r '.result | length')
+            if [ "${n}" = "0" ]; then
+              echo "creating proxied CNAME ${name} -> ${TARGET}"
+              curl -s -X POST "${api}/zones/${zid}/dns_records" \
+                -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" -H "Content-Type: application/json" \
+                --data "{\"type\":\"CNAME\",\"name\":\"${name}\",\"content\":\"${TARGET}\",\"proxied\":true}" \
+                | jq -c '{success, errors, name:.result.name, proxied:.result.proxied}'
+            else
+              echo "= ${name}: ${n} CNAME record(s) already present — skipping"
+            fi
+          done
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: e23e7f2a089411193e86a3f444cf0954
 
   stox:
     name: Deploy stox (Worker)
