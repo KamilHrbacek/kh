@@ -164,6 +164,10 @@ body.navopen .brand .m path{fill:var(--paper);}
   .cgrid{grid-template-columns:1fr;gap:40px;}
   .cform .frow{grid-template-columns:1fr;gap:18px;}
   .bgrid{grid-template-columns:1fr;}
+  /* content shares the header gutter on mobile: drop the desktop's extra inset
+     (the +clamp(74..104px) baked into .wrap) so the card rail + all content hang on the
+     SAME left/right verticals as the logo and the hamburger. One gutter, top to bottom. */
+  .wrap{padding-left:clamp(30px,7vw,84px);padding-right:clamp(30px,7vw,84px);}
   .locgrid{grid-template-columns:1fr;gap:22px;}
   .sec-head{padding:120px 0 32px;}
   .cgrid,.bmlink{padding-bottom:90px;}
@@ -185,7 +189,7 @@ body.navopen .brand .m path{fill:var(--paper);}
 @media(max-width:760px) and (orientation:landscape){
   #home .lockup{--mw:min(64vh,460px);}
 }
-@media(max-width:480px){.wrap{padding:0 calc(clamp(30px,7vw,84px) + 56px);} .lblock{padding:20px 0;}}
+@media(max-width:480px){.lblock{padding:20px 0;}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;}}
 
 /* shared KH mark symbol */
