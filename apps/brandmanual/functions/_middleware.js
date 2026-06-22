@@ -1,24 +1,24 @@
 // Email one-time-PIN gate for the whole brand manual (Cloudflare Pages Function).
-// Simple, per-app, STATELESS (no D1/KV): the PIN challenge and the session both
-// live in HMAC-signed cookies, so the only infra is one secret + an email path.
-// This is the interim gate; group-wide it will be replaced by KH-RBAC.
+// Simple, per-app, stateless cookies. NOBODY types a secret: the HMAC signing key
+// is generated on first run and stored in KV (binding BM_KV). This is the interim
+// gate; group-wide it will be replaced by KH-RBAC.
 //
 // Flow:
-//   GET  any page            → dashboard if a valid session cookie, else login page
-//   POST /__auth/request {email}  → if allowlisted, sign a 10-min PIN challenge into
-//                                   a cookie and email the 6-digit PIN. Always "ok"
-//                                   (no account enumeration).
-//   POST /__auth/verify  {email,pin} → on match, set a 24h signed session cookie
-//   GET  /__auth/logout      → clear the session
+//   GET  any page                 → manual if a valid session cookie, else login page
+//   POST /__auth/request {email}  → if allowlisted, sign a 10-min PIN challenge into a
+//                                   cookie + email the 6-digit PIN. Always "ok" (no
+//                                   account enumeration).
+//   POST /__auth/verify {email,pin}→ on match, set a 24h signed session cookie
+//   GET  /__auth/logout           → clear the session
 //
-// Setup on the kh-brandmanual Pages project (Settings → Variables / Secrets):
-//   BM_SESSION_SECRET  — random 32+ chars (signs PIN challenge + session). REQUIRED;
-//                        until set, the manual is denied to everyone (fail-closed).
-//   Email path (one of):
-//     RESEND_API_KEY   — a Resend API key (sends from BM_MAIL_FROM); simplest, or
-//     SEB              — a Cloudflare Email Routing send_email binding (free).
-//   BM_MAIL_FROM       — optional sender, default "brandmanual@kh.group".
-//
+// Setup on the kh-brandmanual Pages project (all CONFIG, no secret to type):
+//   - KV binding  BM_KV  → namespace "kh-brandmanual-auth" (holds the signing key)
+//   - Email path (one of):
+//       SEB            — a Cloudflare Email Routing send_email binding (free; reuses
+//                        the flowsmith sender), or
+//       RESEND_API_KEY — a Resend API key.
+//   - BM_MAIL_FROM (var) — sender, default "forms@flowsmith.online" (kh.group is a
+//                          no-mail domain now, so the PIN must come from a sending one)
 // Allowlist is in code (not secret) — edit ALLOW to add/remove reviewers.
 
 const ALLOW = [
@@ -31,42 +31,34 @@ const SESSION_TTL = 86400;  // 24 h
 const enc = new TextEncoder();
 
 const html = (body, status = 200) =>
-  new Response(body, {
-    status,
-    headers: { "content-type": "text/html; charset=utf-8", "X-Robots-Tag": "noindex, nofollow" },
-  });
+  new Response(body, { status, headers: { "content-type": "text/html; charset=utf-8", "X-Robots-Tag": "noindex, nofollow" } });
 const json = (obj, status = 200, extra = {}) =>
-  new Response(JSON.stringify(obj), {
-    status,
-    headers: { "content-type": "application/json", "X-Robots-Tag": "noindex, nofollow", ...extra },
-  });
+  new Response(JSON.stringify(obj), { status, headers: { "content-type": "application/json", "X-Robots-Tag": "noindex, nofollow", ...extra } });
 
 function b64url(bytes) {
-  let s = btoa(String.fromCharCode(...new Uint8Array(bytes)));
-  return s.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+  return btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
+function hex(bytes) { return [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, "0")).join(""); }
 async function hmac(secret, msg) {
   const key = await crypto.subtle.importKey("raw", enc.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   return b64url(await crypto.subtle.sign("HMAC", key, enc.encode(msg)));
 }
-function eq(a, b) {
-  if (a.length !== b.length) return false;
-  let r = 0;
-  for (let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  return r === 0;
-}
+function eq(a, b) { if (a.length !== b.length) return false; let r = 0; for (let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i); return r === 0; }
 function cookies(req) {
   const out = {};
-  (req.headers.get("Cookie") || "").split(/;\s*/).forEach((p) => {
-    const i = p.indexOf("=");
-    if (i > 0) out[p.slice(0, i)] = decodeURIComponent(p.slice(i + 1));
-  });
+  (req.headers.get("Cookie") || "").split(/;\s*/).forEach((p) => { const i = p.indexOf("="); if (i > 0) out[p.slice(0, i)] = decodeURIComponent(p.slice(i + 1)); });
   return out;
 }
-const setCookie = (name, val, maxAge) =>
-  `${name}=${encodeURIComponent(val)}; Path=/; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Strict`;
+const setCookie = (name, val, maxAge) => `${name}=${encodeURIComponent(val)}; Path=/; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Strict`;
 
-async function validSession(env, req) {
+// Signing key: generated once, persisted in KV. No human ever types a secret.
+async function getKey(env) {
+  let k = await env.BM_KV.get("hmac_key");
+  if (!k) { k = hex(crypto.getRandomValues(new Uint8Array(32))); await env.BM_KV.put("hmac_key", k); }
+  return k;
+}
+
+async function validSession(secret, req) {
   const c = cookies(req).bm_sess;
   if (!c) return null;
   const [emailB64, exp, sig] = c.split(".");
@@ -75,43 +67,35 @@ async function validSession(env, req) {
   let email;
   try { email = atob(emailB64.replace(/-/g, "+").replace(/_/g, "/")); } catch { return null; }
   if (!ALLOW.includes(email)) return null;
-  const want = await hmac(env.BM_SESSION_SECRET, `sess|${email}|${exp}`);
-  return eq(sig, want) ? email : null;
+  return eq(sig, await hmac(secret, `sess|${email}|${exp}`)) ? email : null;
 }
 
 async function sendPin(env, email, pin) {
-  const from = env.BM_MAIL_FROM || "brandmanual@kh.group";
+  const from = env.BM_MAIL_FROM || "forms@flowsmith.online";
   const subject = "Your KH brand manual PIN";
   const text = `Your sign-in PIN for the KH brand manual is ${pin}\n\nIt expires in 10 minutes. If you didn't request it, ignore this email.`;
   if (env.RESEND_API_KEY) {
-    await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" },
-      body: JSON.stringify({ from: `KH Brand Manual <${from}>`, to: email, subject, text }),
-    });
+    await fetch("https://api.resend.com/emails", { method: "POST", headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "content-type": "application/json" }, body: JSON.stringify({ from: `KH Brand Manual <${from}>`, to: email, subject, text }) });
     return;
   }
   if (env.SEB && typeof EmailMessage !== "undefined") {
-    const raw =
-      `From: KH Brand Manual <${from}>\r\nTo: ${email}\r\nSubject: ${subject}\r\n` +
-      `Message-ID: <${crypto.randomUUID()}@kh.group>\r\nMIME-Version: 1.0\r\n` +
-      `Content-Type: text/plain; charset=utf-8\r\n\r\n${text}`;
+    const raw = `From: KH Brand Manual <${from}>\r\nTo: ${email}\r\nSubject: ${subject}\r\nMessage-ID: <${crypto.randomUUID()}@flowsmith.online>\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${text}`;
     await env.SEB.send(new EmailMessage(from, email, raw));
     return;
   }
-  console.log("brandmanual: no email transport configured (set RESEND_API_KEY or SEB) — PIN not sent");
+  console.log("brandmanual: no email transport (set SEB binding or RESEND_API_KEY) — PIN not sent");
 }
 
 export async function onRequest(context) {
   const { request, env, next } = context;
   const url = new URL(request.url);
-  const secret = env.BM_SESSION_SECRET;
 
-  if (!secret) {
-    return html(`<!doctype html><meta charset=utf-8><title>Locked</title><body style="font-family:system-ui;max-width:32rem;margin:14vh auto;padding:0 1.2rem;color:#15150f"><h1 style="font-weight:600">Brand manual — locked</h1><p>Sign-in isn't configured yet (no <code>BM_SESSION_SECRET</code>). The manual stays private until it is.</p></body>`, 503);
-  }
+  // Interim (KH-approved): until the BM_KV binding is added, serve the manual openly
+  // (noindex still applies). Binding BM_KV flips the email-PIN gate ON — fail-closed
+  // from then on. So review can happen now; the password is added later by binding KV.
+  if (!env.BM_KV) return next();
+  const secret = await getKey(env);
 
-  // --- auth endpoints ---
   if (url.pathname === "/__auth/request" && request.method === "POST") {
     let email = "";
     try { email = ((await request.json()).email || "").trim().toLowerCase(); } catch {}
@@ -122,7 +106,7 @@ export async function onRequest(context) {
       await sendPin(env, email, pin);
       return json({ ok: true }, 200, { "Set-Cookie": setCookie("bm_chal", `${exp}.${sig}`, PIN_TTL) });
     }
-    return json({ ok: true }); // same response for non-allowlisted (no enumeration)
+    return json({ ok: true });
   }
 
   if (url.pathname === "/__auth/verify" && request.method === "POST") {
@@ -131,14 +115,10 @@ export async function onRequest(context) {
     const chal = cookies(request).bm_chal;
     if (chal && ALLOW.includes(email)) {
       const [exp, sig] = chal.split(".");
-      if (exp && sig && Date.now() / 1000 <= Number(exp)) {
-        const want = await hmac(secret, `req|${email}|${pin}|${exp}`);
-        if (eq(sig, want)) {
-          const sexp = Math.floor(Date.now() / 1000) + SESSION_TTL;
-          const ssig = await hmac(secret, `sess|${email}|${sexp}`);
-          const sess = `${b64url(enc.encode(email))}.${sexp}.${ssig}`;
-          return json({ ok: true }, 200, { "Set-Cookie": setCookie("bm_sess", sess, SESSION_TTL) });
-        }
+      if (exp && sig && Date.now() / 1000 <= Number(exp) && eq(sig, await hmac(secret, `req|${email}|${pin}|${exp}`))) {
+        const sexp = Math.floor(Date.now() / 1000) + SESSION_TTL;
+        const ssig = await hmac(secret, `sess|${email}|${sexp}`);
+        return json({ ok: true }, 200, { "Set-Cookie": setCookie("bm_sess", `${b64url(enc.encode(email))}.${sexp}.${ssig}`, SESSION_TTL) });
       }
     }
     return json({ ok: false }, 401);
@@ -148,8 +128,7 @@ export async function onRequest(context) {
     return new Response(null, { status: 302, headers: { Location: "/", "Set-Cookie": setCookie("bm_sess", "", 0) } });
   }
 
-  // --- gate ---
-  if (await validSession(env, request)) return next();
+  if (await validSession(secret, request)) return next();
   return html(LOGIN);
 }
 
