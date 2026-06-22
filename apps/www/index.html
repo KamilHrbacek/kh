@@ -192,7 +192,6 @@ body.navopen .brand .m path{fill:var(--paper);}
   /* stack each address like a real postal address: street on line 1, "PSČ City" on line 2 */
   .locr{grid-template-columns:max-content 1fr;gap:2px 10px;}
   .locr>span:first-child{grid-column:1/-1;}
-  .loc-full{display:none;}.loc-short{display:inline;}
   .sec-head{padding:120px 0 32px;}
   .cgrid,.bmlink{padding-bottom:90px;}
 }
@@ -325,7 +324,7 @@ body.navopen .brand .m path{fill:var(--paper);}
       </form>
     </div>
     <div class="locs">
-      <button class="locstoggle" onclick="document.getElementById('contact').classList.toggle('locopen')">All locations <span>&#8595;</span></button>
+      <button class="locstoggle" onclick="document.getElementById('contact').classList.toggle('locopen');fitAddr()">All locations <span>&#8595;</span></button>
       <div class="locgrid">
         <div class="loccol">
           <div class="locc">Prague</div>
@@ -421,6 +420,24 @@ function go(v){
   document.getElementById('menuBtn').classList.remove('open');
   window.scrollTo(0,0);
 }
+
+/* Address shortening — only when needed. Show the full street by default; if it would
+   wrap in its cell (measured with white-space:nowrap), swap to the short form. Re-runs on
+   resize and whenever the locations panel opens. Pure CSS can't test for overflow. */
+function fitAddr(){
+  document.querySelectorAll('.locr').forEach(function(r){
+    var full=r.querySelector('.loc-full'), short=r.querySelector('.loc-short');
+    if(!full||!short) return;
+    full.style.display=''; short.style.display='none';      // assume the full street fits
+    var cell=full.parentElement;
+    if(cell.offsetParent===null) return;                    // hidden (panel closed) → skip
+    var ws=cell.style.whiteSpace; cell.style.whiteSpace='nowrap';
+    var overflows=full.scrollWidth > cell.clientWidth + 1;
+    cell.style.whiteSpace=ws;
+    if(overflows){ full.style.display='none'; short.style.display=''; }
+  });
+}
+window.addEventListener('resize',function(){clearTimeout(window.__fa);window.__fa=setTimeout(fitAddr,120);});
 
 /* brands — rendered from KH_TOKENS. Each tile's colour is the brand's own
    override, or its world's family accent when none is set. */
