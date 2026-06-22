@@ -160,7 +160,7 @@ body.navopen .brand .m path{fill:var(--paper);}
   /* one edge gutter, shared with the header padding-x: the hamburger sits --g from the
      right, the claim sits --g from the left → the plate is balanced and both columns
      hang off the same vertical as the (hidden) header content. */
-  #home{--g:clamp(30px,7vw,84px);}
+  #home{--g:clamp(30px,7vw,84px);--t:24px;--head:54px;}
   .cgrid{grid-template-columns:1fr;gap:40px;}
   .cform .frow{grid-template-columns:1fr;gap:18px;}
   .bgrid{grid-template-columns:1fr;}
@@ -172,12 +172,13 @@ body.navopen .brand .m path{fill:var(--paper);}
 @media(max-width:760px) and (orientation:portrait){
   #home{align-items:stretch;}
   #home .lockup{display:flex;flex-direction:column;align-items:stretch;height:100dvh;width:100%;gap:0;}
-  /* upper band: KH mark, with a top protective zone tall enough to clear the hamburger
-     (so the mark reads a touch lower, not jammed under the header). */
-  #home .markwrap{flex:0 0 62%;width:auto;aspect-ratio:auto;display:flex;align-items:center;justify-content:center;padding:clamp(108px,18vw,136px) var(--g) 8px;box-sizing:border-box;}
-  #home .markwrap .mark{height:min(42vh,300px);width:auto;max-width:100%;}
-  /* lower band: the three lines, LEFT-aligned, left edge pinned to the --g vertical. */
-  #home .claim{flex:1 1 38%;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;text-align:left;white-space:normal;font-size:clamp(20px,5.6vw,26px);transform:none;padding:0 var(--g) 40px;}
+  /* the three lines: anchored to the BOTTOM, the same distance --t the hamburger sits
+     from the top; left edge pinned to the --g vertical. */
+  #home .claim{order:2;flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-start;text-align:left;white-space:normal;font-size:clamp(20px,5.6vw,26px);transform:none;margin-bottom:var(--t);padding:0 var(--g);}
+  /* the KH mark fills the band ABOVE the text and is centred between the header bottom
+     (--head) and the text top → balances the two visual masses. */
+  #home .markwrap{order:1;flex:1 1 auto;min-height:0;width:auto;aspect-ratio:auto;display:flex;align-items:center;justify-content:center;padding:var(--head) var(--g) 0;box-sizing:border-box;}
+  #home .markwrap .mark{width:100%;height:auto;max-height:100%;}
 }
 /* LANDSCAPE phone — short height: use the desktop side-by-side lockup, scaled off
    viewport height so it always fits (and reads like the desktop landscape composition). */
