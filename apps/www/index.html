@@ -178,6 +178,11 @@ body.navopen .brand .m path{fill:var(--paper);}
      can't collide with the logo. left band = edge-zone(--g) + logo(46px) + inner-zone(--g);
      right band = the same around the hamburger(30px). The page flows continuously between. */
   .wrap{padding-left:calc(var(--g)*2 + 46px);padding-right:calc(var(--g)*2 + 30px);}
+  /* the world map deliberately BREAKS OUT of the content band to span the widest zone
+     on the page — from the logo's left edge (--g) to the hamburger's right edge (--g from
+     the right), running under the header columns as a bold near-full-width graphic.
+     negative margins cancel the .wrap band padding above. */
+  .worldmap{margin-left:calc(-1 * (var(--g) + 46px));margin-right:calc(-1 * (var(--g) + 30px));}
   .locgrid{grid-template-columns:1fr;gap:22px;}
   .sec-head{padding:120px 0 32px;}
   .cgrid,.bmlink{padding-bottom:90px;}
