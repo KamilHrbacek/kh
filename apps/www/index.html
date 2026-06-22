@@ -3,8 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KH.group — site</title>
+<title>.group</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Titillium+Web:ital,wght@0,200;0,300;0,400;0,600;0,700;1,300&display=swap" rel="stylesheet">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#f4f2ec">
+<!-- brand colours: single source of truth, shared with brandmanual.kh.group -->
+<script src="brand-tokens.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{--ink:#15150f;--paper:#f4f2ec;--paper-2:#eceae3;--mute:#8a8a82;--line:#dcd9d1;--accent:#FF6000;}
@@ -153,9 +157,10 @@ body.navopen .brand .m path{fill:var(--paper);}
 @media(max-width:620px){.lblock{grid-template-columns:1fr;gap:8px;}}
 
 @media(max-width:760px){
-  #home .lockup{flex-direction:column;align-items:center;gap:26px;}
-  #home .markwrap{width:min(74vw,360px);}
-  #home .claim{white-space:normal;text-align:center;font-size:22px;transform:none;}
+  #home{align-items:stretch;}
+  #home .lockup{display:grid;grid-template-rows:60% 40%;height:100dvh;width:100%;gap:0;justify-items:center;}
+  #home .markwrap{align-self:center;width:min(72vw,360px);}
+  #home .claim{align-self:start;padding-top:7%;white-space:normal;text-align:center;font-size:clamp(20px,6vw,26px);transform:none;}
   .cgrid{grid-template-columns:1fr;gap:40px;}
   .cform .frow{grid-template-columns:1fr;gap:18px;}
   .bgrid{grid-template-columns:1fr;}
@@ -333,7 +338,20 @@ body.navopen .brand .m path{fill:var(--paper);}
 
 <script>
 const root=document.documentElement, reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-const ACCENTS=['#FF6000','#5B8DEF','#C9A24A','#DE0A96'];
+/* brand colours come from KH_TOKENS (brand-tokens.js, shared with the brand
+   manual). A baked-in fallback keeps the site alive if that file fails to load. */
+const TOK = (window.KH_TOKENS) || {
+  palette:['#FF6000','#5B8DEF','#C9A24A','#DE0A96'],
+  worlds:[
+    {name:'Robotics',accent:'#FF6000',brands:[['PhotoRobot','photorobot.com'],['uni-Robot','uni-robot.com']]},
+    {name:'Manufacturing',accent:'#FF6000',brands:[['sheetparts','sheetparts.com','#9aa3ab'],['sls.market','sls.market'],['prototype.builders','prototype.builders']]},
+    {name:'Orchestration',accent:'#5B8DEF',brands:[['flowsmith','flowsmith.online']]},
+    {name:'Living',accent:'#C9A24A',brands:[['bestpenthouse','bestpenthouse.cz'],['strizkov.apartments','strizkov.apartments'],['strelnicna','strelnicna.cz'],['mysak.studio','mysak.studio','#9b9387']]},
+    {name:'Travel',accent:'#C9A24A',brands:[['madhouse','madhouse.vip']]},
+    {name:'Care',accent:'#DE0A96',brands:[['PhotoRobot Medical','cases.photorobot.io',null,'https://cases.photorobot.io/breast-cancer-care/']]}
+  ]
+};
+const ACCENTS=TOK.palette;
 const WTARGETS=[['vision'],['system'],['scaled'],['system','scaled']];
 let lastA=-1,lastW=-1,lastL=-1;
 function pick(n,last){if(n<=1)return 0;let r;do{r=(Math.random()*n)|0;}while(r===last);return r;}
@@ -355,18 +373,11 @@ function go(v){
   window.scrollTo(0,0);
 }
 
-/* brands */
-const BRANDS=[
-  {w:'Robotics',items:[['PhotoRobot','photorobot.com','#FF6000'],['uni-Robot','uni-robot.com','#FF6000']]},
-  {w:'Manufacturing',items:[['sheetparts','sheetparts.com','#9aa3ab'],['sls.market','sls.market','#FF6000'],['prototype.builders','prototype.builders','#FF6000']]},
-  {w:'Orchestration',items:[['flowsmith','flowsmith.online','#5B8DEF']]},
-  {w:'Living',items:[['bestpenthouse','bestpenthouse.cz','#C9A24A'],['strizkov.apartments','strizkov.apartments','#C9A24A'],['strelnicna','strelnicna.cz','#C9A24A'],['mysak.studio','mysak.studio','#9b9387']]},
-  {w:'Travel',items:[['madhouse','madhouse.vip','#C9A24A']]},
-  {w:'Care',items:[['PhotoRobot Medical','cases.photorobot.io','#DE0A96','https://cases.photorobot.io/breast-cancer-care/']]},
-];
-document.getElementById('brandList').innerHTML=BRANDS.map(g=>
-  '<div class="bgroup"><div class="glabel">'+g.w+'</div><div class="bgrid">'+
-  g.items.map(b=>'<a class="btile" style="--bc:'+b[2]+'" href="'+(b[3]||'https://'+b[1])+'" target="_blank" rel="noopener"><span class="bn">'+b[0]+'</span><span class="bfoot"><span class="bd">'+b[1]+'</span><span class="arr">&#8599;</span></span></a>').join('')+
+/* brands — rendered from KH_TOKENS. Each tile's colour is the brand's own
+   override, or its world's family accent when none is set. */
+document.getElementById('brandList').innerHTML=TOK.worlds.map(g=>
+  '<div class="bgroup"><div class="glabel">'+g.name+'</div><div class="bgrid">'+
+  g.brands.map(b=>'<a class="btile" style="--bc:'+(b[2]||g.accent)+'" href="'+(b[3]||'https://'+b[1])+'" target="_blank" rel="noopener"><span class="bn">'+b[0]+'</span><span class="bfoot"><span class="bd">'+b[1]+'</span><span class="arr">&#8599;</span></span></a>').join('')+
   '</div></div>').join('');
 
 /* companies — legal register (banking details kept internal) */
