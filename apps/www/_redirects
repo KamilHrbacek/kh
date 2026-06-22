@@ -1,2 +1,3 @@
-# kh.group is canonical; send www → apex (301)
-https://www.kh.group/* https://kh.group/:splat 301
+# Canonicalisation www -> apex is handled by a Cloudflare zone Redirect Rule
+# ("Redirect from WWW to root", 301 + preserve query), NOT here: Cloudflare Pages
+# _redirects matches PATHS, not hostnames, so a cross-host www->apex rule never fires.
