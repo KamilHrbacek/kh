@@ -1,0 +1,10 @@
+# brand-tokens.js — single source of truth for brand colours, shared with
+# brandmanual.kh.group (and any other KH surface). CORS open so it can be fetched
+# cross-origin; short cache so palette edits propagate fast.
+/brand-tokens.js
+  Access-Control-Allow-Origin: *
+  Cache-Control: public, max-age=300, must-revalidate
+
+# static art (favicons, OG cover, images) — long cache, they rarely change
+/assets/*
+  Cache-Control: public, max-age=2592000
