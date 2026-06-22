@@ -86,8 +86,26 @@ git -C "$WORK" commit -q -m "$MSG"
 git -C "$WORK" -c http.extraheader="$AUTH" push --quiet -u origin "$BRANCH"
 echo "pushed → $SLUG@$BRANCH ✓  Cloudflare will build the changed app(s)."
 
-# Signal the host auto-sync (cowork-sync), if installed: this repo was just pushed, so
-# it is now SAFE to mirror cloud → local (origin is ahead; reset --hard is lossless).
-# Marker = a file the host LaunchAgent watches; filename is the repo basename, body the branch.
+# --- mirror cloud → local (host auto-sync) -----------------------------------------
+# Drop a marker the host LaunchAgent watches; it runs `git fetch + reset --hard` on the
+# local clone (origin is ahead → lossless) and DELETES the marker when the sync succeeds.
+# A vanished marker therefore means "local now matches the cloud". The .installed presence
+# file (created by the install step) tells us the auto-sync exists, so we only wait for
+# confirmation when it can actually happen — no delay for users who haven't set it up.
 SYNC_DIR="${COWORK_SYNC_DIR:-$REPO_ROOT/../.cowork-sync}"
-( mkdir -p "$SYNC_DIR" && printf '%s\n' "$BRANCH" > "$SYNC_DIR/$(basename "$REPO_ROOT").pushed" ) 2>/dev/null || true
+NAME="$(basename "$REPO_ROOT")"
+MARKER="$SYNC_DIR/$NAME.pushed"
+mkdir -p "$SYNC_DIR" 2>/dev/null && printf '%s\n' "$BRANCH" > "$MARKER" 2>/dev/null || true
+if [ -f "$SYNC_DIR/.installed" ]; then
+  synced=""
+  for _ in $(seq 1 20); do [ -f "$MARKER" ] || { synced=1; break; }; sleep 0.5; done
+  if [ -n "$synced" ]; then
+    echo "local mirror synced ✓  ~/Projects/$NAME now matches origin/$BRANCH (cloud == local)."
+  else
+    echo "note: auto-sync didn't confirm in ~10s — see ~/Projects/.cowork-sync/cowork-sync.log."
+    echo "      sync now if needed: git -C ~/Projects/$NAME fetch origin && git -C ~/Projects/$NAME reset --hard origin/$BRANCH"
+  fi
+else
+  echo "note: local auto-sync not installed — your local ~/Projects/$NAME is NOT updated by this push (the cloud is)."
+  echo "      one-time setup makes it automatic: skills/cowork-push/references/local-sync.md"
+fi
