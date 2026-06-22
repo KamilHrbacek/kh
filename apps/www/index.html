@@ -184,10 +184,14 @@ body.navopen .brand .m path{fill:var(--paper);}
   #home .markwrap{order:1;flex:1 1 auto;min-height:0;width:auto;aspect-ratio:auto;display:flex;align-items:center;justify-content:center;padding:var(--head) var(--g) 0;box-sizing:border-box;}
   #home .markwrap .mark{width:100%;height:auto;max-height:100%;}
 }
-/* LANDSCAPE phone — short height: use the desktop side-by-side lockup, scaled off
-   viewport height so it always fits (and reads like the desktop landscape composition). */
-@media(max-width:760px) and (orientation:landscape){
-  #home .lockup{--mw:min(64vh,460px);}
+/* PHONE IN LANDSCAPE — detected by short viewport HEIGHT (a landscape phone is wider
+   than 760px, so a width query misses it; height ≤520 catches it without touching real
+   desktop). Desktop-style side-by-side lockup, sized off height so it always fits, with
+   the claim nudged up so the 3-line block ≈ half the logo leg. */
+@media (orientation:landscape) and (max-height:520px){
+  #home{align-items:center;justify-content:center;}
+  #home .lockup{--mw:min(80vh,480px);flex-direction:row;align-items:flex-end;}
+  #home .claim{font-size:calc(var(--mw)*.036);}
 }
 @media(max-width:480px){.lblock{padding:20px 0;}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;}}
