@@ -1,5 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="1130 620 1260 1260">
-  
+  <style>
+    path{fill:#15150f}                                  /* light browser theme → black KH */
+    @media (prefers-color-scheme: dark){path{fill:#ffffff}}  /* dark theme → white KH */
+  </style>
   <g transform="matrix(4.16667,0,0,4.16667,261.577,49.4367)">
     <g transform="matrix(1,0,0,1,256.329,274.17)"><path d="M0,-83.008L0,106.219L-34.816,106.219L-34.816,-83.008L0,-83.008Z"></path></g>
     <g transform="matrix(1,0,0,1,383.046,304.447)"><path d="M0,-37.343L76.952,-37.343L76.952,-113.285L111.774,-113.285L111.774,75.942L76.952,75.942L76.952,-5.302L0,-5.302"></path></g>
