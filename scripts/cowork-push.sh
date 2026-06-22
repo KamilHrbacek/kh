@@ -85,3 +85,9 @@ fi
 git -C "$WORK" commit -q -m "$MSG"
 git -C "$WORK" -c http.extraheader="$AUTH" push --quiet -u origin "$BRANCH"
 echo "pushed → $SLUG@$BRANCH ✓  Cloudflare will build the changed app(s)."
+
+# Signal the host auto-sync (cowork-sync), if installed: this repo was just pushed, so
+# it is now SAFE to mirror cloud → local (origin is ahead; reset --hard is lossless).
+# Marker = a file the host LaunchAgent watches; filename is the repo basename, body the branch.
+SYNC_DIR="${COWORK_SYNC_DIR:-$REPO_ROOT/../.cowork-sync}"
+( mkdir -p "$SYNC_DIR" && printf '%s\n' "$BRANCH" > "$SYNC_DIR/$(basename "$REPO_ROOT").pushed" ) 2>/dev/null || true
