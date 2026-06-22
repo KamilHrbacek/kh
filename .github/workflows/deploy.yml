@@ -61,6 +61,21 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: e23e7f2a089411193e86a3f444cf0954
+      - name: Attach custom domains (idempotent — apex canonical, www → apex via CF rule later)
+        run: |
+          for d in kh.group www.kh.group; do
+            code=$(curl -s -o /tmp/resp.json -w "%{http_code}" -X POST \
+              "https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/pages/projects/kh-www/domains" \
+              -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+              -H "Content-Type: application/json" \
+              --data "{\"name\":\"${d}\"}")
+            echo "== ${d} -> HTTP ${code} =="
+            cat /tmp/resp.json; echo
+            # 200 = attached, 409/"already exists" = idempotent no-op; anything else is surfaced above
+          done
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: e23e7f2a089411193e86a3f444cf0954
 
   stox:
     name: Deploy stox (Worker)
