@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-06-23 16:31 UTC
+- Docs/idiot-proofing: added READMEs for apps/www, apps/stox, apps/brandmanual + index READMEs (apps/, docs/, reference/). Corrected CLAUDE.md + root README to reality: brandmanual is live (not planned), stox is CF Pages not a Worker, project names kh-www/kh-stox/kh-brandmanual, www→apex is a CF zone Redirect Rule, secrets-vault note added.
+
+
 Newest first. UTC timestamps.
 
 ## 2026-06-22 — kh.group LIVE (apps/www on Cloudflare Pages)

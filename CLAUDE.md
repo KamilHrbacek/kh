@@ -9,15 +9,18 @@ The **KH Group umbrella monorepo**: one git repo for everything under the
 `kh.group` one (sibling brands like `flowsmith` live in their own umbrella repos).
 
 ```
-apps/          things Cloudflare DEPLOYS (one folder per deployable)
-  www/         the kh.group website            → kh.group            (CF Pages)
-  stox/        portfolio + market-signal app   → stox.kh.group       (CF Worker)
+apps/          things Cloudflare DEPLOYS (one folder per deployable; all static CF Pages)
+  www/         the kh.group website             → kh.group              (Pages: kh-www)
+  stox/        portfolio + market-signal app    → stox.kh.group         (Pages: kh-stox)
+  brandmanual/ private brand manual (PIN-gated) → brandmanual.kh.group  (Pages: kh-brandmanual)
 packages/      shared code consumed by apps (brand, ui, auth/KH-RBAC) — empty until first shared
 scripts/       one-off ops scripts
 docs/          architecture + design notes
+reference/     archived source + handoffs (NOT deployed)
 ```
 
-Future apps (planned): `vcards/` (team v-cards), `brandmanual/`.
+Future apps (planned): `vcards/` (team v-cards). `brandmanual/` is now live.
+Each app folder has its own README; `apps/README.md` is the index.
 
 ## The convention (why the layout is this way)
 
@@ -34,9 +37,11 @@ Future apps (planned): `vcards/` (team v-cards), `brandmanual/`.
 
 - Git → Cloudflare. Push to `main` triggers path-scoped deploys
   (`.github/workflows/deploy.yml`). No deploys from a laptop sandbox.
-- `apps/www` → Pages project (**TODO: create + name**); `apps/stox` → Worker
-  (**TODO: name**). Custom domains `kh.group` (apex canonical) + `stox.kh.group`.
-- CF account: `e23e7f2a089411193e86a3f444cf0954` (KH — **verify**).
+- `apps/www` → Pages `kh-www`; `apps/stox` → Pages `kh-stox`; `apps/brandmanual` →
+  Pages `kh-brandmanual`. CI attaches the custom domains (`kh.group` apex-canonical +
+  `www`, `stox.kh.group`, `brandmanual.kh.group`); **DNS records are added by hand** —
+  CI is DNS-less by design and must never touch kh-group.eu email/MX.
+- CF account: `e23e7f2a089411193e86a3f444cf0954` (KH).
 
 ## Push (commit → GitHub)
 
@@ -48,6 +53,11 @@ script + pattern are reusable in any KH cowork repo.
 
 ## Conventions
 
-- Apex canonical (`https://kh.group/`); `www` 301s to apex.
+- Apex canonical (`https://kh.group/`); `www` 301s to apex via a **Cloudflare zone
+  Redirect Rule** ("Redirect from WWW to root", 301 + preserve query) — NOT `_redirects`,
+  which can't redirect by hostname on Pages.
 - Always maintain `CHANGELOG.md` (UTC, newest first), this file, and `README.md`.
 - British English, quiet factual voice, no emoji in user-facing copy.
+- Secrets (GitHub PAT, Cloudflare token) live locally in `~/Projects/.kh-secrets/` +
+  `~/Projects/tokens/.env` (gitignored) and are backed up **encrypted** in the private
+  `kh-secrets` repo via the `secrets-vault` skill. Never commit a plaintext token.
