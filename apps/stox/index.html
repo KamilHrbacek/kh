@@ -546,34 +546,24 @@ body{
 
 <div class="modal" id="modal" aria-hidden="true"><div class="msheet" id="msheet"></div></div>
 
-<script>
-/* ---- illustrative portfolio (fake but plausible) ---- */
-const FX={EUR:1, USD:0.92, JPY:0.0062, CZK:0.040};  /* illustrative — wire live rates in production */
+<script type="module">
+/* ---- STOX Phase A: data now arrives from /api/* (Cloudflare Pages Functions; mock today, live
+   later). Top-level await fetches once up front; the rest of the script stays synchronous as
+   before. Thin adapters map the API's object shapes back to the internal tuples/maps the UI
+   uses, so downstream rendering is unchanged. To go live, swap a handler body in functions/api. */
+const __API='/api';
+const __get=p=>fetch(__API+p).then(r=>{if(!r.ok)throw new Error('STOX api '+p+': '+r.status);return r.json();});
+const __pfids=await __get('/portfolios');
+const __hold={}; await Promise.all(__pfids.map(async id=>{ __hold[id]=await __get('/holdings?pf='+encodeURIComponent(id)); }));
+const [__fx,__yields,__watch,__news,__sig,__recs]=await Promise.all([
+  __get('/fx'),__get('/yields'),__get('/watchlist'),__get('/news'),__get('/signals'),__get('/recommendations')]);
+window.closeDetail=closeDetail; window.openFX=openFX;  /* inline onclick handlers need these global */
+const FX=__fx;  /* { EUR, USD, JPY, CZK, asOf } — consumed as FX[ccy] */
 const SYM={EUR:'€', USD:'$', JPY:'¥', CZK:'Kč'};
-const PORTFOLIOS={
- KH:[
-  // sym, name, type, region, currency, value(native), totalReturnPct, dayPct(illustrative)
-  ['FLEX','Franklin Lexington PE Secondaries','Fund','Global','EUR',126747.92, 1.40, 0.20],
-  ['JQUA','JPMorgan US Quality Factor','ETF','US','USD',89275.00, 12.85, 0.60],
-  ['CEMR','iShares Edge MSCI Europe Momentum','ETF','Europe','EUR',70737.20, 1.08, 0.30],
-  ['VHYL','Vanguard FTSE All-World High Div','ETF','Global','USD',79819.65,-0.37,-0.40],
-  ['EMVL','iShares Edge MSCI EM Value','ETF','Emerging','USD',46173.60, 23.47, 1.10],
-  ['WSML','iShares MSCI World Small-Cap','ETF','Developed','USD',27915.92, 5.23, 0.50],
-  ['REMX','VanEck Rare Earth & Strategic Metals','ETF','US','USD',17199.00, 5.79, 0.90],
-  ['PBE','Invesco Biotechnology & Genome','ETF','US','USD',16758.80, 3.37, 0.40],
-  ['1306','NEXT FUNDS TOPIX ETF','ETF','Japan','JPY',2578200, 12.31, 0.80],
-  ['DFEN','VanEck Defense UCITS','ETF','Europe','EUR',12544.80,-11.73,-1.20],
-  ['PRN','Invesco Dorsey Wright Industrials','ETF','US','USD',12766.50, 21.14, 0.70],
-  ['AIRR','First Trust RBA American Industrial','ETF','US','USD',11781.00, 10.53, 0.50],
- ],
- Monika:[
-  ['VWCE','Vanguard FTSE All-World','ETF','Global','EUR',38400, 9.20, 0.30],
-  ['IWDA','iShares Core MSCI World','ETF','Developed','EUR',26100, 10.40, 0.40],
-  ['CSPX','iShares Core S&P 500','ETF','US','USD',19800, 13.10, 0.50],
-  ['AGGH','iShares Core Global Bond','ETF','Global','EUR',14200, 1.80,-0.10],
-  ['EIMI','iShares Core MSCI EM','ETF','Emerging','USD',8600, 6.40, 0.60],
- ]
-};
+/* holdings come from /api/holdings?pf=<id>; adapt API objects back to the UI's tuple shape:
+   [sym, name, type, region, ccy, value(native), totalReturnPct, dayPct(illustrative)] */
+const PORTFOLIOS={};
+for(const __id of __pfids){ PORTFOLIOS[__id]=(__hold[__id]||[]).map(h=>[h.sym,h.name,h.type,h.region,h.ccy,h.value,h.returnPct,h.dayPct]); }
 try{const cu=JSON.parse(localStorage.getItem('stox_pf_custom')||'{}'); Object.assign(PORTFOLIOS,cu);}catch(e){}
 const PFNAME=(localStorage.getItem('stox_pf')&&PORTFOLIOS[localStorage.getItem('stox_pf')])?localStorage.getItem('stox_pf'):'KH';
 const H=PORTFOLIOS[PFNAME];
@@ -871,7 +861,7 @@ function openFXChart(ccy){
 }
 
 /* Income / dividends: which holdings actually pay, and whether the income strategy earns its place */
-const YIELD={VHYL:3.6, EMVL:2.9, JQUA:1.3, CEMR:2.1, WSML:1.6, '1306':2.0, AIRR:0.9, PRN:0.7, REMX:0.0, PBE:0.0, DFEN:0.4, FLEX:0.0};
+const YIELD=__yields;  /* sym → trailing yield %, from /api/yields */
 function openIncome(){
   const data=rows.map(r=>{const y=YIELD[r.sym]||0; return {sym:r.sym,nm:r.nm,ccy:r.ccy,y,inc:r.valEur*y/100,val:r.valEur};}).sort((a,b)=>b.inc-a.inc);
   const totInc=data.reduce((a,d)=>a+d.inc,0), yoc=totInc/inv*100, maxInc=Math.max(...data.map(d=>d.inc))||1;
@@ -1166,21 +1156,9 @@ function priceFrom(sym,start,end,n){
   out[n-1]=end;
   return out.map((val,i)=>({v:val,date:dAgo(n-1-i)}));
 }
-const WATCH=[
-  // sym, name, region, ccy, weeksAgo flagged, entry price (native), last (native), notional € intended, dayPct
-  ['NKE','Nike','US','USD',60,95.00,45.20,8000, 0.8],
-  ['SBUX','Starbucks','US','USD',44,78.00,100.65,7000, 0.5],
-  ['DIS','Walt Disney','US','USD',38,84.00,103.89,8000, 1.1],
-  ['BA','Boeing','US','USD',54,245.00,222.72,6000,-0.6],
-  ['SAP','SAP SE','Europe','EUR',40,132.00,155.22,9000,-0.4],
-  ['GE','GE Aerospace','US','USD',72,158.00,357.64,7000, 0.9],
-  ['MBG.DE','Mercedes-Benz','Europe','EUR',50,62.00,44.58,6000,-0.7],
-  ['AIR.DE','Airbus','Europe','EUR',46,150.00,187.48,7000,-0.5],
-  ['BRK-B','Berkshire Hathaway','US','USD',64,410.00,489.46,12000,-0.3],
-  ['ALV.DE','Allianz','Europe','EUR',42,330.00,401.60,8000, 0.4],
-  ['HD','Home Depot','US','USD',48,360.00,334.28,7000, 0.6],
-  ['GOOGL','Alphabet','US','USD',80,132.00,368.03,10000, 0.7],
-];
+/* watchlist from /api/watchlist; adapt objects → tuple
+   [sym, name, region, ccy, weeksAgo, entry(native), last(native), notional € intended, dayPct] */
+const WATCH=__watch.map(w=>[w.sym,w.name,w.region,w.ccy,w.weeksAgo,w.entry,w.last,w.notional,w.dayPct]);
 const STAKE_INIT=10000; let STAKE=10000;
 let wTotal=0, wNotional=0;
 const wrows=WATCH.map(w=>{ const[sym,nm,reg,ccy,wk,entry,last,notional,dp]=w;
@@ -1278,33 +1256,17 @@ function asof(){var d=new Date();var t=new Intl.DateTimeFormat(undefined,{hour:'
 asof(); setInterval(asof,30000);
 
 /* ---- phase 2 preview content ---- */
-const NEWS=[
-  ['Truth Social','New tariff threat on semiconductor imports — "we will protect American chips".','NVDA · ASML','down'],
-  ['Reuters','ECB holds rates; signals patience into autumn. EU equities firm.','VWCE · IWDA','up'],
-  ['Bloomberg','Apple services revenue beats; guidance lifted on AI features.','AAPL','up'],
-  ['X / crowd','Retail flow piles into Nvidia ahead of GTC — options volume at record.','NVDA','up'],
-  ['FT','Tesla deliveries miss; price cuts pressure margins again.','TSLA','down'],
-];
+const NEWS=__news.map(n=>[n.src,n.text,n.tickers,n.dir]);  /* from /api/news */
 document.getElementById('news').innerHTML=NEWS.map(n=>
   '<div class="nitem"><span class="nsrc">'+n[0]+'</span><div class="ntext">'+n[1]+
   '<span class="chip '+(n[3]==='up'?'up':'down')+'" style="margin-left:8px">'+n[2]+'</span></div></div>').join('');
 
-const SIG=[['US large-cap tech',78],['Semiconductors',41],['EU industrials',63],['EV / Tesla',28]];
+const SIG=__sig.map(s=>[s.name,s.score]);  /* from /api/signals */
 document.getElementById('signal').innerHTML=SIG.map((s,i)=>
   '<div><div class="sgrow"><span class="sgname"><b>'+s[0]+'</b></span><span class="num">'+s[1]+' / 100</span></div><div class="meter"><i style="width:'+s[1]+'%;background:'+BRASS[i%BRASS.length]+'"></i></div></div>').join('');
 
-const RECS=[
-  ['Add','EMVL','Emerging',82,'EM value momentum is building and a softer USD is a tailwind. Adds to a winning but under-weight book.',[['Bloomberg',30,'+'],['Reuters',22,'+'],['EM Weekly · newsletter',28,'+'],['Perplexity synth',20,'~']]],
-  ['Buy','AVGO','Semiconductors',76,'Custom AI-silicon demand intact; on your watchlist but never bought — entry still reasonable.',[['FT',26,'+'],['Morningstar',24,'+'],['X / crowd',20,'+'],['Perplexity synth',30,'~']]],
-  ['Hold','NVDA','Semiconductors',88,'Headline dip on tariff noise; order books unchanged. Core position — do nothing.',[['Bloomberg',34,'+'],['Reuters',26,'~'],['Truth Social',20,'-'],['Perplexity synth',20,'+']]],
-  ['Trim','TSLA','US',61,'Margin trend and sentiment both negative; you trimmed once — consider finishing.',[['FT',30,'-'],['Reuters',24,'-'],['X / crowd',26,'~'],['Perplexity synth',20,'-']]],
-  ['Hold','DFEN','Defense',70,'Down ~12%, but EU defense capex is a ~2030 thesis. Hold; do not add fresh money now.',[['Defense News',30,'+'],['Reuters',24,'~'],['Macro · newsletter',26,'+'],['Perplexity synth',20,'~']]],
-  ['Buy','TSM','Semiconductors',84,'The foundry everyone depends on; valuation undemanding versus its moat and AI demand.',[['Bloomberg',32,'+'],['Morningstar',26,'+'],['Semi Weekly · newsletter',24,'+'],['Perplexity synth',18,'+']]],
-  ['Buy','VNM','Emerging',73,'Vietnam: the next Asian tiger you flagged. Frontier-to-EM upgrade path is the catalyst.',[['EM Weekly · newsletter',30,'+'],['Reuters',22,'+'],['Perplexity synth',26,'+'],['X / crowd',18,'~']]],
-  ['Watch','ARKK','AI',52,'High beta, high noise. Wait for a clearer trend before committing fresh money.',[['X / crowd',30,'~'],['FT',24,'-'],['Perplexity synth',24,'~'],['Morningstar',18,'-']]],
-  ['Buy','URA','Uranium',69,'Nuclear restart cycle + supply deficit; a contrarian energy angle off the beaten path.',[['Macro · newsletter',32,'+'],['Bloomberg',24,'+'],['Reuters',22,'~'],['Perplexity synth',18,'+']]],
-  ['Avoid','MEME','US',34,'Crowd-driven, no fundamental support. Against your preferences — skip.',[['X / crowd',40,'~'],['Truth Social',24,'~'],['Perplexity synth',20,'-'],['FT',16,'-']]],
-];
+/* advisor calls from /api/recommendations; adapt → tuple [act,sym,sector,conviction,rationale,sources] */
+const RECS=__recs.map(r=>[r.act,r.sym,r.sector,r.conviction,r.rationale,r.sources]);
 const buyList=new Set();
 function renderBuyBar(){
   const b=document.getElementById('buyBar'); if(!b)return;

@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-06-24 15:51 UTC
+- stox Phase A: the dashboard now reads its data from `/api/*` Cloudflare Pages Functions
+  (`apps/stox/functions/api/[[route]].js`) instead of inline constants. Endpoints (mock today,
+  one adapter-swap to live later): `/me /portfolios /holdings /fx /yields /watchlist /news
+  /signals /recommendations` (alias `/advisor`) `/sources`. `index.html` is now a
+  `<script type="module">` that fetches once via top-level await and adapts the API's object
+  shapes back to the UI's internal tuples/maps, so rendering is byte-for-byte unchanged. Verified:
+  API unit tests, adapter round-trip identical to the old inline data, and a jsdom init run with
+  no exceptions (`#tot` + watchlist/news/signals render; `closeDetail`/`openFX` exposed on window
+  for the inline handlers). Still mock data + `noindex`; Cloudflare Access + live adapters are Phase B/C.
+
 ## 2026-06-23 16:31 UTC
 - Docs/idiot-proofing: added READMEs for apps/www, apps/stox, apps/brandmanual + index READMEs (apps/, docs/, reference/). Corrected CLAUDE.md + root README to reality: brandmanual is live (not planned), stox is CF Pages not a Worker, project names kh-www/kh-stox/kh-brandmanual, www→apex is a CF zone Redirect Rule, secrets-vault note added.
 
