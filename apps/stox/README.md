@@ -3,18 +3,19 @@
 Static dashboard for **https://stox.kh.group/**. Cloudflare Pages project **`kh-stox`**.
 
 ## Status
-Live with **mock data** and **`noindex`** (private preview). **Phase A done:** the frontend now
-reads its data from `/api/*` (Cloudflare Pages Functions) instead of inline constants — going live
-later is one adapter-swap per endpoint, no frontend change. Cloudflare Access + live data feeds are
-Phase B/C. Contract + roadmap: `../../reference/stox-handoff/`. Design polish is owner-driven; don't
-restyle without a heads-up.
+Live with **mock data** and **`noindex`** (private preview). An `/api/*` scaffold is in place
+(`functions/api/[[route]].js`, mock today) for wiring live data later — but the **frontend still
+runs on its inline data** (partly real; it's the base we keep). Phase B layers live sources in
+**per-domain** with inline fallback, retiring mock only once enough live sources exist (never an
+all-or-nothing dependency on `/api`). Contract + roadmap: `../../reference/stox-handoff/`. Design
+polish is owner-driven; don't restyle without a heads-up.
 
 ## Files
-- `index.html` — the dashboard (`<script type="module">`); on load it fetches `/api/*` once
-  (top-level await) and adapts the responses to the shapes the UI renders.
-- `functions/api/[[route]].js` — the mock API (Pages Functions): `/me /portfolios /holdings /fx
-  /yields /watchlist /news /signals /recommendations /sources`. Swap a handler body for a real
-  adapter (bank export, Yahoo Finance, FX, AI engine) to go live; the frontend stays put.
+- `index.html` — the dashboard; data is **inline** (mock + some real), rendered synchronously.
+- `functions/api/[[route]].js` — the `/api/*` scaffold (Pages Functions) returning the same mock
+  shapes: `/me /portfolios /holdings /fx /yields /watchlist /news /signals /recommendations
+  /sources`. **Not yet consumed by the frontend** — Phase B will wire it per domain (with inline as
+  fallback); swap a handler body for a real adapter (bank export, Yahoo Finance, FX, AI engine) then.
 - `favicon-stox.svg` — gold `#c9a24a` KH mark; `favicon.svg` — fallback.
 - `assets/`, `maps/` — gold textures + the map SVG.
 

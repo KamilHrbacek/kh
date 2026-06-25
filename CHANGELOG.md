@@ -1,15 +1,22 @@
 # Changelog
 
-## 2026-06-24 15:51 UTC
-- stox Phase A: the dashboard now reads its data from `/api/*` Cloudflare Pages Functions
-  (`apps/stox/functions/api/[[route]].js`) instead of inline constants. Endpoints (mock today,
-  one adapter-swap to live later): `/me /portfolios /holdings /fx /yields /watchlist /news
-  /signals /recommendations` (alias `/advisor`) `/sources`. `index.html` is now a
-  `<script type="module">` that fetches once via top-level await and adapts the API's object
-  shapes back to the UI's internal tuples/maps, so rendering is byte-for-byte unchanged. Verified:
-  API unit tests, adapter round-trip identical to the old inline data, and a jsdom init run with
-  no exceptions (`#tot` + watchlist/news/signals render; `closeDetail`/`openFX` exposed on window
-  for the inline handlers). Still mock data + `noindex`; Cloudflare Access + live adapters are Phase B/C.
+## 2026-06-25 16:13 UTC
+- stox Phase A (revised): added the `/api/*` scaffold — Cloudflare Pages Functions
+  (`apps/stox/functions/api/[[route]].js`) returning today's mock data (`/me /portfolios /holdings
+  /fx /yields /watchlist /news /signals /recommendations` + `/advisor` alias `/sources`), ready to
+  swap to live adapters one endpoint at a time. **Frontend kept on its inline data** — it's partly
+  REAL and is the base we keep.
+- Reverted an over-eager cutover: index.html had been turned into a `type="module"` that fetched
+  `/api` via top-level await. When the deployed Pages Functions weren't served, the failed
+  top-level await killed the module and left the whole dashboard **blank**. Restored the inline
+  data (synchronous render, always works offline).
+- Plan (Phase B): layer live sources in **per-domain** with the inline data as fallback, and only
+  retire the mock once enough live sources exist — never a hard all-or-nothing dependency on `/api`.
+
+## Lesson
+Don't make a working UI hard-depend on a not-yet-served backend. A `<script type="module">` whose
+top-level `await fetch()` rejects renders NOTHING — one missing endpoint blanks the page. Keep the
+inline/last-good data as the base and treat live data as a per-domain enhancement with fallback.
 
 ## 2026-06-23 16:31 UTC
 - Docs/idiot-proofing: added READMEs for apps/www, apps/stox, apps/brandmanual + index READMEs (apps/, docs/, reference/). Corrected CLAUDE.md + root README to reality: brandmanual is live (not planned), stox is CF Pages not a Worker, project names kh-www/kh-stox/kh-brandmanual, www→apex is a CF zone Redirect Rule, secrets-vault note added.
