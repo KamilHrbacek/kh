@@ -23,6 +23,12 @@ polish is owner-driven; don't restyle without a heads-up.
 Push `apps/stox/**` to `main` → CI builds `kh-stox` → stox.kh.group. The subdomain's DNS
 CNAME is added by hand (human-gated), not by CI.
 
+**Pages Functions gotcha:** the deploy step runs `wrangler pages deploy .` **from inside
+`apps/stox`** (`working-directory: apps/stox`). Wrangler compiles `functions/` only when it sits
+in the CWD — deploying `apps/stox` from the repo root uploads `functions/` as static files and
+`/api/*` then 404s to the SPA. Keep the `working-directory`. (Verify after deploy:
+`stox.kh.group/api/health` must return JSON, not the dashboard HTML.)
+
 ## Footguns
 - It's **mock data** — the numbers aren't real until the backend (handoff Phase A/B) lands.
 - `noindex` is deliberate; keep it until the app is public.

@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-06-25 16:51 UTC
+- stox B0 (deploy fix): kh-stox was serving `/api/*` as the SPA, not as Pages Functions — root
+  cause of the Phase A blank. The deploy ran `wrangler pages deploy apps/stox` from the repo root;
+  wrangler compiles `functions/` only when it's in the **CWD**, so `functions/api/[[route]].js` was
+  uploaded as a static file (run #44 log: "Uploaded 2 files", no "Compiled Worker"). Fix: the stox
+  deploy step now uses `working-directory: apps/stox` + `wrangler pages deploy .`, so `./functions`
+  is found and compiled. Verify: `stox.kh.group/api/health` returns JSON. (Frontend still on inline
+  data — this only makes the `/api` scaffold actually reachable for Phase B.)
+
 ## 2026-06-25 16:13 UTC
 - stox Phase A (revised): added the `/api/*` scaffold — Cloudflare Pages Functions
   (`apps/stox/functions/api/[[route]].js`) returning today's mock data (`/me /portfolios /holdings
