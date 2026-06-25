@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-06-25 17:12 UTC
+- stox B1 (fail-safe live-data overlay): added a non-blocking `khLive(name, path, apply)` helper at
+  the end of `index.html`. Inline data still renders synchronously and is the always-on base; per
+  domain we may upgrade to `/api` and re-render just that section, but ANY failure — 404, network,
+  or the SPA-HTML fallback (caught by a `content-type` guard) — silently keeps inline. No top-level
+  await, no hard `/api` dependency, so the Phase-A blank cannot recur. Wired the **news** domain
+  through it as the proof (mock-identical today). Verified in jsdom across three paths: api-up →
+  live re-render; api-404 and api-returns-HTML → inline retained; the page never blanks. FX/holdings
+  are deliberately NOT wired yet — they feed the whole dashboard and need a fuller refresh (B2).
+
 ## 2026-06-25 16:51 UTC
 - stox B0 (deploy fix): kh-stox was serving `/api/*` as the SPA, not as Pages Functions — root
   cause of the Phase A blank. The deploy ran `wrangler pages deploy apps/stox` from the repo root;

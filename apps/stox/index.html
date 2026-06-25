@@ -1438,6 +1438,38 @@ document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   t.classList.add('on'); document.getElementById(t.dataset.v).classList.add('on');
   window.scrollTo(0,0);
 }));
+
+/* ============================================================================
+   LIVE-DATA OVERLAY (Phase B) — additive, non-blocking, fail-safe.
+   Everything above renders synchronously from the INLINE data and is the
+   always-on base. Per domain we MAY upgrade to /api; on success we re-render
+   just that domain, on ANY failure we keep inline. There is deliberately no
+   top-level await and no hard dependency: a missing/broken /api changes nothing
+   and can NEVER blank the page (the Phase-A lesson). To make a domain live,
+   point its handler at a real adapter in functions/api — the frontend stays put.
+   ============================================================================ */
+const KH_API='/api';
+async function khLive(name, path, apply){
+  try{
+    const r = await fetch(KH_API+path, {headers:{accept:'application/json'}});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    // guard against the SPA fallback: an unrouted /api returns the dashboard HTML, not JSON
+    if(!(r.headers.get('content-type')||'').includes('application/json')) throw new Error('not JSON (api not served?)');
+    const data = await r.json();
+    apply(data);
+  }catch(e){ console.warn('[stox] live "'+name+'" → keeping inline:', e.message); }
+}
+/* Domains wired through the overlay. Each apply() must be safe to run AFTER the
+   inline render (an idempotent re-render of that section only).
+   FX/holdings are intentionally NOT here yet — they feed the whole dashboard and
+   need a fuller refresh path (Phase B2). News is mock today; /api/news returns the
+   same shape, so this is visually identical and just proves the live path + fallback. */
+khLive('news', '/news', rows=>{
+  if(!Array.isArray(rows) || !rows.length) return;
+  document.getElementById('news').innerHTML = rows.map(n=>
+    '<div class="nitem"><span class="nsrc">'+n.src+'</span><div class="ntext">'+n.text+
+    '<span class="chip '+(n.dir==='up'?'up':'down')+'" style="margin-left:8px">'+n.tickers+'</span></div></div>').join('');
+});
 </script>
 </body>
 </html>
