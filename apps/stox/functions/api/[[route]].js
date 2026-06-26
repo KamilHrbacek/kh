@@ -105,7 +105,23 @@ function identity(request) {
   return { user: email, role: 'owner', portfolios: Object.keys(HOLDINGS) };
 }
 
-export function onRequest(context) {
+async function liveFx(nowISO){
+  // live ECB rates via Frankfurter (no key); cached at the edge ~1h; fall back to mock on any error.
+  // FX[ccy] = EUR per 1 unit of ccy (frontend does valEur = val * FX[ccy]); Frankfurter base=EUR
+  // gives ccy-per-EUR, so we invert.
+  try{
+    const r = await fetch('https://api.frankfurter.app/latest?base=EUR&symbols=USD,JPY,CZK',
+      { cf:{ cacheTtl:3600, cacheEverything:true } });
+    if(!r.ok) throw new Error('frankfurter '+r.status);
+    const d = await r.json(); const rt = d.rates||{};
+    const inv = c => rt[c] ? +(1/rt[c]).toFixed(6) : null;
+    const USD=inv('USD'), JPY=inv('JPY'), CZK=inv('CZK');
+    if(!USD||!JPY||!CZK) throw new Error('frankfurter incomplete');
+    return { EUR:1, USD, JPY, CZK, asOf: d.date ? d.date+'T00:00:00Z' : nowISO, source:'frankfurter' };
+  }catch(e){ return { ...FX, asOf: nowISO, source:'mock-fallback' }; }
+}
+
+export async function onRequest(context) {
   const { request } = context;
   if (request.method === 'OPTIONS') return new Response(null, { headers: CORS });
 
@@ -120,7 +136,7 @@ export function onRequest(context) {
     case '/health':     return json({ ok: true, phase: 'A (mock)', ts: nowISO });
     case '/me':         return json(me);
     case '/portfolios': return json(me.portfolios);                              // ["KH","Monika"]
-    case '/fx':         return json({ ...FX, asOf: nowISO });                    // TODO: live FX feed
+    case '/fx':         return json(await liveFx(nowISO));                       // live ECB (Frankfurter) + mock fallback
     case '/holdings':   return json(HOLDINGS[q.get('pf') || 'KH'] || []);        // TODO: bank export
     case '/yields':     return json(YIELDS);                                     // TODO: dividend feed
     case '/watchlist':

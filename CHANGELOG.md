@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-06-26 22:52 UTC
+- stox B2 (start) — `/api/fx` now returns **live ECB rates** via Frankfurter (no key), fetched
+  server-side in the Pages Function and edge-cached ~1h, with a **fall back to the mock rates** on
+  any error (`source: frankfurter | mock-fallback` in the payload). Backend-only: the frontend still
+  reads inline FX, so the dashboard is visually unchanged and never at risk — next B2 step wires FX
+  through the `khLive()` overlay (with a re-callable dashboard refresh) so live rates actually flow.
+- Also: this cowork (`kh.group:cowork`) onboarded to the agent-bus DNA — see `CLAUDE.md` "Layer 0".
+
 ## 2026-06-25 17:12 UTC
 - stox B1 (fail-safe live-data overlay): added a non-blocking `khLive(name, path, apply)` helper at
   the end of `index.html`. Inline data still renders synchronously and is the always-on base; per
