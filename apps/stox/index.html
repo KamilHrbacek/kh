@@ -475,7 +475,7 @@ body{
 
     <div class="foot">
       <div class="khend"><svg class="khe" viewBox="1130 800 1260 900" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(4.16667,0,0,4.16667,261.577,49.4367)"><g transform="matrix(1,0,0,1,256.329,274.17)"><path d="M0,-83.008L0,106.219L-34.816,106.219L-34.816,-83.008L0,-83.008Z"></path></g><g transform="matrix(1,0,0,1,383.046,304.447)"><path d="M0,-37.343L76.952,-37.343L76.952,-113.285L111.774,-113.285L111.774,75.942L76.952,75.942L76.952,-5.302L0,-5.302"></path></g><g transform="matrix(1,0,0,1,387.995,380.389)"><path d="M0,-189.227L-40.622,-189.227L-94.752,-107.226L-103.298,-94.614L-94.752,-82.001L-40.622,0L0,0L-63.721,-94.614L0,-189.227Z"></path></g></g></svg><span>stox · a KH tool · private dashboard</span></div>
-      <span class="buildtag">build 2026.06.27-1 · 10:39 UTC</span>
+      <span class="buildtag">build 2026.06.27-2 · 13:41 UTC</span>
     </div>
   </div>
 </main>
@@ -494,7 +494,7 @@ body{
       <div class="addhint" id="addHint"></div>
     </div>
     <div id="watchTbl"></div>
-    <div class="foot"><div class="khend"><svg class="khe" viewBox="1130 800 1260 900" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(4.16667,0,0,4.16667,261.577,49.4367)"><g transform="matrix(1,0,0,1,256.329,274.17)"><path d="M0,-83.008L0,106.219L-34.816,106.219L-34.816,-83.008L0,-83.008Z"></path></g><g transform="matrix(1,0,0,1,383.046,304.447)"><path d="M0,-37.343L76.952,-37.343L76.952,-113.285L111.774,-113.285L111.774,75.942L76.952,75.942L76.952,-5.302L0,-5.302"></path></g><g transform="matrix(1,0,0,1,387.995,380.389)"><path d="M0,-189.227L-40.622,-189.227L-94.752,-107.226L-103.298,-94.614L-94.752,-82.001L-40.622,0L0,0L-63.721,-94.614L0,-189.227Z"></path></g></g></svg><span>sandbox · hypothetical · not advice</span></div><span class="buildtag">build 2026.06.27-1 · 10:39 UTC</span></div>
+    <div class="foot"><div class="khend"><svg class="khe" viewBox="1130 800 1260 900" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(4.16667,0,0,4.16667,261.577,49.4367)"><g transform="matrix(1,0,0,1,256.329,274.17)"><path d="M0,-83.008L0,106.219L-34.816,106.219L-34.816,-83.008L0,-83.008Z"></path></g><g transform="matrix(1,0,0,1,383.046,304.447)"><path d="M0,-37.343L76.952,-37.343L76.952,-113.285L111.774,-113.285L111.774,75.942L76.952,75.942L76.952,-5.302L0,-5.302"></path></g><g transform="matrix(1,0,0,1,387.995,380.389)"><path d="M0,-189.227L-40.622,-189.227L-94.752,-107.226L-103.298,-94.614L-94.752,-82.001L-40.622,0L0,0L-63.721,-94.614L0,-189.227Z"></path></g></g></svg><span>sandbox · hypothetical · not advice</span></div><span class="buildtag">build 2026.06.27-2 · 13:41 UTC</span></div>
   </div>
 </main>
 
@@ -1577,6 +1577,53 @@ khLive('signals', '/signals', rows=>{
   if(same) return;                                                 // identical (e.g. mock) → no churn
   SIG.length=0; for(const r of next) SIG.push(r);                  // keep SIG canonical for re-renders
   renderSignals(SIG);                                              // re-render just the meters
+});
+
+/* Advisor (B2): the AI recommendation cards (Add/Buy/Hold/Trim/Watch/Avoid + the per-source
+   conviction breakdown), wired through the same fail-safe overlay as news/signals. /api/advisor
+   serves [{act,sym,sector,conviction,rationale,sources:[[name,weight,sign]]}] — the AI engine
+   fills this for real later; mock today matches inline, so this is visually identical and just
+   proves the live path + fallback. Like signals it re-renders ONLY its own section (the rec list
+   and its sector filter), never the money path — recommendations carry no currency. The sector
+   filter universe is rebuilt from the live rows, so a payload introducing a NEW sector grows its
+   filter chip; the active sector is preserved if still present, else falls back to 'All' (a dropped
+   sector can't strand the list behind a dead chip). Buy-list picks survive a live re-render.
+   Fail-safe by construction: an empty, malformed (bad row, unknown act, conviction out of 0..100,
+   missing fields, bad sources), identical (mock-fallback), 404 or SPA-HTML payload triggers no
+   re-render and the inline cards stay on screen (khLive already swallows fetch/JSON errors). */
+khLive('advisor', '/advisor', rows=>{
+  if(!Array.isArray(rows) || !rows.length) return;                 // empty/malformed → keep inline
+  const ACTS=new Set(['Add','Buy','Hold','Trim','Sell','Watch','Avoid']);
+  const next=[];
+  for(const a of rows){                                            // map API objects → inline tuple shape
+    if(!a || typeof a.sym!=='string' || typeof a.act!=='string' || !ACTS.has(a.act)) return;
+    if(typeof a.sector!=='string' || !a.sector) return;            // every card needs a sector (filter universe)
+    const conf=+a.conviction;
+    if(!isFinite(conf) || conf<0 || conf>100) return;              // out-of-range conviction → keep inline
+    if(typeof a.rationale!=='string') return;
+    if(!Array.isArray(a.sources)) return;
+    const src=[];
+    for(const s of a.sources){                                     // each source = [name, weight, sign]
+      if(!Array.isArray(s) || typeof s[0]!=='string') return;
+      const w=+s[1]; if(!isFinite(w) || w<0) return;
+      src.push([s[0], w, (s[2]==='+'||s[2]==='-')?s[2]:'~']);      // unknown sign → neutral
+    }
+    next.push([a.act, a.sym, a.sector, Math.round(conf), a.rationale, src]);
+  }
+  const sameRow=(r,c)=> r[0]===c[0] && r[1]===c[1] && r[2]===c[2] && r[3]===c[3] && r[4]===c[4]
+      && r[5].length===c[5].length
+      && r[5].every((s,j)=> s[0]===c[5][j][0] && s[1]===c[5][j][1] && s[2]===c[5][j][2]);
+  const same = next.length===RECS.length && next.every((r,i)=> sameRow(r, RECS[i]));
+  if(same) return;                                                 // identical (e.g. mock) → no churn
+  RECS.length=0; for(const r of next) RECS.push(r);                // keep RECS canonical for re-renders
+  const secs=['All'].concat([...new Set(RECS.map(r=>r[2]))]);      // rebuild filter universe from live rows
+  const sel=secs.includes(curSec)?curSec:'All';                   // preserve active sector if still present
+  const f=document.getElementById('recFilter');
+  if(f){
+    f.innerHTML=secs.map(s=>'<button class="tfbtn'+(s===sel?' on':'')+'" data-s="'+s+'">'+s+'</button>').join('');
+    f.querySelectorAll('.tfbtn').forEach(b=>b.addEventListener('click',()=>{f.querySelectorAll('.tfbtn').forEach(x=>x.classList.remove('on'));b.classList.add('on');renderRecs(b.dataset.s);}));
+  }
+  renderRecs(sel);                                                 // re-render the cards (buy-list picks retained)
 });
 </script>
 </body>

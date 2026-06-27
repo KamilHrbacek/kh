@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-06-27 13:41 UTC
+- stox B2 (fifth live domain) — **the AI recommendation cards now flow through the live overlay.**
+  Wired `/api/advisor` through the same fail-safe `khLive()` overlay as news/signals. The advisor
+  cards (Add/Buy/Hold/Trim/Watch/Avoid + the per-source conviction breakdown) already had a
+  re-callable `renderRecs(sec)`; the new `khLive('advisor', '/advisor', …)` block maps the API's
+  `[{act,sym,sector,conviction,rationale,sources:[[name,weight,sign]]}]` back to the inline tuple
+  shape, keeps `RECS` canonical (mutated in place so `openCandidate()`'s `RECS.find` stays valid),
+  rebuilds the **sector filter universe** from the live rows (a new sector grows a chip; a dropped
+  one makes the active filter fall back to **All** so the list can't strand behind a dead chip; the
+  active sector is otherwise preserved), and re-renders **only the cards + their filter** — never the
+  money/`recomputeFX()` path (recommendations carry no currency). Buy-list picks survive a live
+  re-render. Fail-safe by construction: a non-array (e.g. a 404 object), empty, malformed (bad row,
+  unknown `act`, conviction outside 0..100, missing `sector`/`rationale`, bad `sources`), identical
+  (mock-fallback) or failed payload triggers no re-render and the inline cards stay on screen
+  (`khLive` already swallows fetch/JSON errors). Mock matches inline today, so this is a no-op live
+  and a proven path for the AI engine to light up. Verified: `node --check` on the full inline script
+  (syntax OK) + an 18-case unit test over the apply logic (identical→no churn; live diff→re-render +
+  `RECS` replaced + sector preserved; dropped sector→falls back to All; empty/non-array/unknown act/
+  conviction>100/conviction<0/empty sector/bad sources×3→inline retained; unknown sign→normalised to
+  neutral + render). Bumped the footer build stamp (header + watchlist) `2026.06.27-1 · 10:39 UTC`
+  → `2026.06.27-2 · 13:41 UTC`.
+
 ## 2026-06-27 10:39 UTC
 - stox B2 (fourth live domain) — **AI signal-strength meters now flow through the live overlay.**
   Wired `/api/signals` through the same fail-safe `khLive()` overlay as news: the inline meter
