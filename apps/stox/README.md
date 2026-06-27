@@ -20,9 +20,10 @@ polish is owner-driven; don't restyle without a heads-up.
   via `recomputeFX()`) and **`/holdings`** (B2 — live positions for the active portfolio mutate `H`
   in place then run the same `recomputeFX()`; mock today, a bank-export adapter later). Other domains
   still read inline until wired; swap a handler body for a real adapter (bank export, Yahoo Finance,
-  AI engine) then point its `khLive()` at it. Note: the holdings currency/region filter universes are
-  snapshotted at init — a live payload with a new currency/region won't add a filter chip until that
-  rebuild lands (next holdings step).
+  AI engine) then point its `khLive()` at it. The holdings currency/region filter universes are
+  rebuilt from the live rows inside `recomputeFX()` (`rebuildFilterUniverses()`), so a payload that
+  introduces a new currency/region grows its filter chip and one that drops it loses the chip (an
+  active filter whose value disappears falls back to **All**).
 - `favicon-stox.svg` — gold `#c9a24a` KH mark; `favicon.svg` — fallback.
 - `assets/`, `maps/` — gold textures + the map SVG.
 

@@ -1,5 +1,25 @@
 # Changelog
 
+## 2026-06-27 07:36 UTC
+- stox B2 (holdings filter universes) — **live holdings payloads now grow/shrink the currency &
+  region filter chips.** Previously `FCCYS`/`FREGS` were `const`, snapshotted from the inline rows
+  at init, so a live `/api/holdings` payload introducing a NEW currency or region propagated into
+  the table and totals but never gained a filter chip. Added `rebuildFilterUniverses()`, called
+  inside `recomputeFX()` before `buildChips()`: it rebuilds both universes from the current rows
+  **stably** — keeps existing chip order, drops the gone, appends the new — so the common no-op
+  payload reorders nothing; and if the active filter's value is no longer present it falls back to
+  `ALL` (else a removed-currency payload would hide every row behind a dead chip). The chip label
+  now guards an unknown currency symbol (`SYM[c]||''`) so a new currency renders as plain code, not
+  `undefined`. Fail-safe unchanged: the rebuild only runs on the recompute path, which fires solely
+  on a well-formed, materially-different payload — malformed/empty/identical/404/HTML still keep the
+  inline universe untouched. Verified across 7 checks (4 jsdom integration: new ccy GBP + region UK
+  → chips appear with no `undefined`, page intact, 0 errors; single-currency payload → universe
+  shrinks to that one; malformed and empty → inline retained, page never blanks. 3 unit over the
+  real function source: active CCY/region removed → filter resets to ALL; new currency appended with
+  stable order + active filter preserved). Completes the follow-up flagged in the 04:40 entry; the
+  holdings live path is now whole-app complete (totals, table, base column, books, chart/donuts,
+  and now filters).
+
 ## 2026-06-27 04:40 UTC
 - stox B2 (second live domain) — **live holdings now flow on screen.** Wired `/api/holdings?pf=<name>`
   through the same fail-safe `khLive()` overlay + whole-app recompute that FX uses: on a well-formed,

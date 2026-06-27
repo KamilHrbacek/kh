@@ -1018,8 +1018,20 @@ function syncGroups(){
 }
 const ccys=[...new Set(rows.map(r=>r.ccy))];
 const fEl=document.getElementById('filters'), fRl=document.getElementById('filtersReg');
-const FCCYS=[...new Set(rows.map(r=>r.ccy))], FREGS=[...new Set(rows.map(r=>r.reg))];
+let FCCYS=[...new Set(rows.map(r=>r.ccy))], FREGS=[...new Set(rows.map(r=>r.reg))];
 let FC='ALL', FR='ALL';
+/* Rebuild the currency/region filter universes from the CURRENT rows so a live holdings
+   payload that introduces a new currency/region grows a filter chip (and one that drops a
+   currency/region loses its chip). Stable: keep existing chip order, drop the gone, append
+   the new — so the common no-op payload reorders nothing. If the active filter's value is no
+   longer present, fall back to ALL, else every row would be hidden behind a dead chip. */
+function rebuildFilterUniverses(){
+  const ccNow=[...new Set(rows.map(r=>r.ccy))], rgNow=[...new Set(rows.map(r=>r.reg))];
+  FCCYS=FCCYS.filter(c=>ccNow.includes(c)).concat(ccNow.filter(c=>!FCCYS.includes(c)));
+  FREGS=FREGS.filter(r=>rgNow.includes(r)).concat(rgNow.filter(r=>!FREGS.includes(r)));
+  if(FC!=='ALL' && !FCCYS.includes(FC)) FC='ALL';
+  if(FR!=='ALL' && !FREGS.includes(FR)) FR='ALL';
+}
 function bspark(start,end,key){
   const n=40, series=priceFrom(key,start,end,n);
   const W=70,H=26,PAD=3,MN=Math.min(...series.map(p=>p.v)),MX=Math.max(...series.map(p=>p.v)),rg=(MX-MN)||1;
@@ -1030,7 +1042,7 @@ function bspark(start,end,key){
 }
 function activeSub(){ return rows.filter(r=>(FC==='ALL'||r.ccy===FC)&&(FR==='ALL'||r.reg===FR)); }
 function buildChips(){
-  fEl.innerHTML='<button class="fchip'+(FC==='ALL'?' on':'')+'" data-c="ALL">All ccy</button>'+FCCYS.map(c=>{const n=rows.filter(r=>r.ccy===c&&(FR==='ALL'||r.reg===FR)).length;return '<button class="fchip'+(FC===c?' on':'')+'" data-c="'+c+'"'+(n?'':' disabled')+'>'+SYM[c]+' '+c+'</button>';}).join('');
+  fEl.innerHTML='<button class="fchip'+(FC==='ALL'?' on':'')+'" data-c="ALL">All ccy</button>'+FCCYS.map(c=>{const n=rows.filter(r=>r.ccy===c&&(FR==='ALL'||r.reg===FR)).length;return '<button class="fchip'+(FC===c?' on':'')+'" data-c="'+c+'"'+(n?'':' disabled')+'>'+(SYM[c]?SYM[c]+' ':'')+c+'</button>';}).join('');
   fRl.innerHTML='<button class="fchip'+(FR==='ALL'?' on':'')+'" data-r="ALL">All regions</button>'+FREGS.map(rg=>{const n=rows.filter(r=>r.reg===rg&&(FC==='ALL'||r.ccy===FC)).length;return '<button class="fchip'+(FR===rg?' on':'')+'" data-r="'+rg+'"'+(n?'':' disabled')+'>'+rg+'</button>';}).join('');
   fEl.querySelectorAll('.fchip').forEach(b=>b.addEventListener('click',()=>{if(b.disabled)return;FC=b.dataset.c;apply();}));
   fRl.querySelectorAll('.fchip').forEach(b=>b.addEventListener('click',()=>{if(b.disabled)return;FR=b.dataset.r;apply();}));
@@ -1489,6 +1501,7 @@ khLive('news', '/news', rows=>{
    surfaces (chart, donuts) are guarded so they can never throw the page into an odd state. */
 function recomputeFX(){
   computeHoldings();
+  rebuildFilterUniverses();   // grow/shrink ccy+region chip universes for live holdings payloads
   renderHoldTable();
   applyBase(BASE);
   buildChips(); setBookSum();
@@ -1515,10 +1528,11 @@ khLive('fx', '/fx', d=>{
    on a well-formed, materially-different payload for THIS portfolio; an empty, malformed,
    identical (mock-fallback), 404 or SPA-HTML response triggers no recompute and the inline
    positions stay on screen (khLive already swallows fetch/JSON errors).
-   Note: the currency/region filter universes (FCCYS/FREGS) are snapshotted at init, so a
-   live payload that introduces a NEW currency or region won't add a filter chip yet —
-   rebuilding those is the next holdings step. Today's payload matches inline, so this is
-   a no-op live and a proven path for the bank-export adapter to light up. */
+   The currency/region filter universes (FCCYS/FREGS) are rebuilt from the live rows inside
+   recomputeFX() (rebuildFilterUniverses()), so a payload that introduces a NEW currency or
+   region grows its filter chip — and one that drops it loses the chip (active filter falls
+   back to ALL if its value is gone). Today's payload matches inline, so this is a no-op
+   live and a proven path for the bank-export adapter to light up. */
 khLive('holdings', '/holdings?pf='+encodeURIComponent(PFNAME), list=>{
   if(!Array.isArray(list) || !list.length) return;                 // empty/malformed → keep inline
   const next=[];
