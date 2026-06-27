@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-06-27 19:39 UTC
+- stox B2 — **wired `/api/yields` through the fail-safe `khLive()` overlay (6th live data domain**,
+  after news/fx/holdings/signals/advisor). The per-holding dividend yields behind the Income modal
+  now upgrade from a live `{ sym: yield% }` payload: a well-formed, materially-different payload
+  replaces the inline `YIELD` map in place (so the next Income-modal open reads live yields; if the
+  modal is already open it re-renders live), while an empty, malformed (non-object, negative or
+  out-of-range yield), identical (mock-fallback), 404 or SPA-HTML response changes nothing and the
+  inline yields stay on screen. Touches only its own surface (the Income modal), never the money
+  path — yields carry no currency. Mock today matches inline, so the live path is a visual no-op and
+  a proven hook for the dividend feed (bank export) to light up by swapping the `/yields` handler
+  body. Frontend-only (`apps/stox/index.html`); `node --check` clean.
+
 ## 2026-06-27 16:40 UTC
 - stox access onboarding — **drafted the canonical KH-RBAC manifest for stox.kh.group.**
   Added `reference/stox-handoff/access-requirements.yaml` (schema v1.1), the layer-3 source KH-RBAC

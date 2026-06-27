@@ -24,7 +24,10 @@ polish is owner-driven; don't restyle without a heads-up.
   cards; `renderRecs()` re-renders only the cards + their sector filter, never the money path; the
   filter universe is rebuilt from the live rows so a new sector grows a chip and a dropped one falls
   back to **All**, with the active sector preserved; buy-list picks survive; mock today, the AI engine
-  later). Other domains still read inline until wired; swap
+  later) and **`/yields`** (B2 — the per-holding dividend yields behind the Income modal; a live
+  `{ sym: yield% }` payload replaces the inline `YIELD` map in place so the next modal open reads live
+  yields, re-rendering if it's already open, never touching the money path; mock today, the dividend
+  feed / bank export later). Other domains still read inline until wired; swap
   a handler body for a real adapter (bank export, Yahoo Finance, AI engine) then point its `khLive()`
   at it. The holdings currency/region filter universes are
   rebuilt from the live rows inside `recomputeFX()` (`rebuildFilterUniverses()`), so a payload that

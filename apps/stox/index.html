@@ -1625,6 +1625,36 @@ khLive('advisor', '/advisor', rows=>{
   }
   renderRecs(sel);                                                 // re-render the cards (buy-list picks retained)
 });
+
+/* Yields (B2): the per-holding dividend yields behind the Income modal, wired through the same
+   fail-safe overlay as news/signals. /api/yields serves a { sym: yield% } map — the dividend
+   feed (bank export) fills this for real later; mock today matches inline, so this is visually
+   identical and just proves the live path + fallback. Like signals it touches ONLY its own
+   surface (the Income modal), never the money path — yields carry no currency. We replace the
+   YIELD map in place so the NEXT time the Income modal opens it reads live yields; if the modal
+   is already open we re-render it. Fail-safe by construction: an empty, malformed (non-object,
+   bad/negative/out-of-range yield), identical (mock-fallback), 404 or SPA-HTML payload triggers
+   no change and the inline yields stay (khLive already swallows fetch/JSON errors). */
+khLive('yields', '/yields', map=>{
+  if(!map || typeof map!=='object' || Array.isArray(map)) return;  // need a { sym: yield% } object
+  const keys=Object.keys(map);
+  if(!keys.length) return;                                         // empty/malformed → keep inline
+  const next={};
+  for(const k of keys){
+    const y=+map[k];
+    if(!isFinite(y) || y<0 || y>100) return;                       // bad yield → reject whole payload
+    next[k]=y;
+  }
+  const ck=Object.keys(YIELD);                                     // materially different vs current?
+  const same = ck.length===keys.length && keys.every(k=> k in YIELD && Math.abs(YIELD[k]-next[k])<1e-9);
+  if(same) return;                                                 // identical (e.g. mock) → no churn
+  for(const k of ck) delete YIELD[k];                              // replace the map in place
+  Object.assign(YIELD, next);
+  const modal=document.getElementById('modal'), sheet=document.getElementById('msheet');
+  if(modal && modal.classList.contains('open') && sheet && sheet.querySelector('.incwrap')){
+    try{ openIncome(); }catch(e){}                                 // Income modal open → re-render it live
+  }
+});
 </script>
 </body>
 </html>
