@@ -33,6 +33,19 @@ polish is owner-driven; don't restyle without a heads-up.
 - `favicon-stox.svg` — gold `#c9a24a` KH mark; `favicon.svg` — fallback.
 - `assets/`, `maps/` — gold textures + the map SVG.
 
+## Access / gating
+stox serves **real portfolio holdings** and is currently `noindex` **only** — i.e. publicly
+reachable. The gate is being onboarded into **KH-RBAC** (central, admin-visible), not a one-off
+CF Access allowlist. `../../reference/stox-handoff/access-requirements.yaml` (schema v1.1) is the
+**canonical** manifest for this app (layer 3 — the service owns its manifest); KH-RBAC ingests a
+stable snapshot into its `docs/handoff/from-stox/` and the applicator reads that copy. It lives in
+`reference/` (not `apps/stox/`) because the Pages deploy uploads everything under `apps/stox/`, so a
+manifest there would be served publicly and leak the owner emails (PII hard-rule). Coarse access
+(group `stox-owner`)
+lives in the manifest; **per-portfolio scoping stays app-side** (`identity()` + a future `kh-stox`
+D1 members table keyed on group membership). The live CF Access apply is a **KH hard-gate** — the
+manifest here is a proposal awaiting greenlight. Coordination: bus id263 → id306 → id316.
+
 ## Deploy
 Push `apps/stox/**` to `main` → CI builds `kh-stox` → stox.kh.group. The subdomain's DNS
 CNAME is added by hand (human-gated), not by CI.

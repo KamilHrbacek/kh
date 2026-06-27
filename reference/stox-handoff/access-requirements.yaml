@@ -1,0 +1,180 @@
+# stox.kh.group — Access Requirements Manifest
+#
+# Machine-readable specification of what stox needs gated and by which role.
+# Owned by kh.group:cowork (layer 3 — the service owns its manifest); consumed by
+# KH-RBAC (layer 2 — groups/policies/applicator). Same ownership model as Academy's
+# infrastructure/access-requirements.yaml.
+#
+# CANONICAL SOURCE. KH-RBAC ingests a stable SNAPSHOT into its repo at
+# docs/handoff/from-stox/access-requirements.yaml and the applicator reads THAT copy —
+# never a cross-repo path or symlink (per KH-RBAC docs/handoff/from-stox/README.md, bus id306).
+#
+# LOCATION NOTE: this lives in reference/stox-handoff/ (a NON-deployed dir), NOT in apps/stox/.
+# stox's Pages deploy is `wrangler pages deploy .` FROM apps/stox, which uploads every file under
+# it — so a manifest there would be served publicly at stox.kh.group/access-requirements.yaml,
+# leaking the owner emails below (violates the PII hard-rule, bus id246). reference/ is never in
+# deploy.yml, so it is guaranteed not served. Academy can keep its manifest in infrastructure/
+# only because its Pages root is a subfolder; stox's root IS the app dir, hence this placement.
+#
+# DELIVERY / PING FLOW: commit this file in the kh repo, then on the bus:
+#   "ping KH-RBAC: stox manifest ready, brief: gate stox.kh.group → stox-owner (3 emails),
+#    interim auth Stay-on-PIN; per-portfolio scope stays app-side."
+# KH opens a KH-RBAC session, refreshes the snapshot, runs an applicator dry-run.
+# The LIVE CF Access apply (create stox-owner group + policy on the stox app) is a
+# KH HARD-GATE — same triple-gate as Academy ticket 099. This manifest is a PROPOSAL.
+
+schema_version: "1.1"
+last_updated: "2026-06-27"
+last_review_by: "kh.group:cowork (stox B2 drain tick) — initial draft for KH-RBAC ingest"
+status: "DRAFT — awaiting KH greenlight; no groups/policies created yet"
+
+service:
+  name: "STOX"
+  slug: "stox"                       # KH-RBAC short-slug convention (ADR-0002), no brand prefix
+  host: "stox.kh.group"
+  repo: "https://github.com/KamilHrbacek/kh"   # umbrella monorepo; app lives at apps/stox/
+  app_path_in_repo: "apps/stox"
+  cf_account: "e23e7f2a089411193e86a3f444cf0954"
+  hosting: "Cloudflare Pages (project kh-stox, auto-deploy from main branch)"
+  data_sensitivity: "PRIVATE — real personal portfolio holdings + valuations (financial PII). No public surface."
+  current_exposure: "noindex,nofollow ONLY — host is publicly reachable today. This manifest closes that gap."
+
+# Roles relevant to stox. KH-RBAC maps these to Access Groups.
+# Unlike Academy, stox has NO anonymous/marketing surface — the whole host is private.
+roles:
+  - id: owner
+    description: "Portfolio owner — full read/write access to every portfolio inside the app."
+    members_today:
+      emails:
+        - "kh@kh-group.eu"           # Kamil Hrbáček (primary)
+        - "kamil@hrbacek.net"
+        - "kamil.hrbacek@gmail.com"
+
+  - id: advisor
+    description: "Banker / financial advisor — read-only, scoped to a subset of holdings (app-side)."
+    phase: "B"                       # not implemented today; no members yet
+    members_today:
+      emails: []                     # TBD when KH names the advisor
+
+  - id: monika
+    description: "Monika (spouse) — read access scoped to the Monika portfolio only (app-side)."
+    phase: "B"                       # not implemented today
+    members_today:
+      emails: []                     # TBD when KH provides Monika's email
+
+# Interim authentication while KH-RBAC onboards stox.
+auth:
+  interim: "Stay-on-PIN (Cloudflare Access email one-time PIN) per ADR-0007 Track B3 — suits stox (low member count, no IdP dependency)."
+  identity_signal: "Cloudflare Access injects Cf-Access-Authenticated-User-Email; apps/stox functions/api/[[route]].js identity() already reads it (defaults to owner until a policy is attached)."
+  runtime_contract: "Once KH-RBAC 0.6.0 /whoami ships (ticket 102), the app reads groups[] from that contract instead of re-deriving from email."
+
+# Access Groups this service uses. KH-RBAC applicator (apply mode) creates these in CF
+# Zero Trust if missing, resolves members from roles[*].members_today, and attaches them
+# as policies on target_apps. See KH-RBAC docs/manifest-schema.md for the full spec.
+groups:
+  - id: "stox-owner"
+    name: "stox-owner"
+    description: "stox portfolio owner — full access to the whole stox app + its /api."
+    sources:
+      - role: owner
+        emails_only: true            # individual emails (no domain wildcard — stox is tightly scoped)
+    target_apps:
+      - app_id: "TBD — create on apply (no CF Access app exists for stox yet)"
+        destination: "stox.kh.group"   # gate the whole host (SPA + /api/*)
+        action: "allow"
+        policy_name: "stox-owner access"
+        precedence: 1
+
+  # Declared for planning; NOT applied in this pass (phase B, no members yet).
+  - id: "stox-advisor"
+    name: "stox-advisor"
+    description: "Banker / advisor — coarse access to stox; read-only scoping is app-side."
+    phase: "B"
+    sources:
+      - role: advisor
+        emails_only: true
+    target_apps:
+      - app_id: "TBD"
+        destination: "stox.kh.group"
+        action: "allow"
+        policy_name: "stox-advisor access"
+        precedence: 2
+
+  - id: "stox-monika"
+    name: "stox-monika"
+    description: "Monika — coarse access to stox; per-portfolio subset is app-side."
+    phase: "B"
+    sources:
+      - role: monika
+        emails_only: true
+    target_apps:
+      - app_id: "TBD"
+        destination: "stox.kh.group"
+        action: "allow"
+        policy_name: "stox-monika access"
+        precedence: 3
+
+# What paths stox serves + how each should be gated. The whole host is private —
+# there is no anonymous role. A single broad gate is correct (and avoids the
+# 5-destination CF Access ceiling Academy hit).
+paths:
+  - pattern: "/*"
+    role: owner
+    description: "Entire SPA (index.html + favicons/assets) — portfolio dashboard. Private."
+
+  - pattern: "/api/*"
+    role: owner
+    description: >-
+      Data plane (Pages Functions, functions/api/[[route]].js): /me /portfolios /fx /holdings
+      /yields /watchlist /news /signals /recommendations /advisor /sources. Carries live
+      portfolio holdings + valuations — MUST be behind the same gate as the SPA.
+    note: "Gating the host (stox.kh.group/*) already covers /api/* — listed separately for clarity."
+
+  - pattern: "/api/health"
+    role: owner
+    optional_public: true
+    description: >-
+      Liveness probe ({ok,phase,ts}) — no PII. MAY be left public for uptime monitoring if
+      KH wants external checks; default is gated with the rest of the host. KH's call.
+
+# Per-portfolio data scoping — which holdings each authenticated member sees INSIDE the app.
+# This is APPLICATION-level authZ and does NOT belong in the KH-RBAC schema (confirmed
+# bus id306 / from-stox README Q2). KH-RBAC owns COARSE access (can this identity reach
+# stox at all); per-row scoping lives app-side.
+app_side_authz:
+  owner: "true"                      # current default: identity() returns role owner, portfolios = all
+  store: "kh-stox D1 members table (app-side), keyed on GROUP membership — NOT raw email (offboarding-safe)."
+  mapping:
+    stox-owner: "all portfolios (KH + Monika + any future)"
+    stox-monika: "Monika portfolio only (subset)"
+    stox-advisor: "read-only subset KH designates"
+  status: "not_implemented — interim is owner-sees-all; build the D1 members table when advisor/monika onboard."
+  reference: "apps/stox/functions/api/[[route]].js identity() + HOLDINGS keys (currently KH, Monika)."
+
+# CF Access app snapshot — today's reality.
+current_cf_access_setup:
+  state: "NONE — stox has no CF Access app or policy yet. Host is reachable to anyone (noindex only)."
+  note: "On apply, KH-RBAC creates the Access app for stox.kh.group + the stox-owner group + ALLOW policy."
+
+# Constraints stox imposes on the access layer.
+constraints:
+  - "Whole host is PRIVATE — there is NO public/marketing/SEO surface to preserve (contrast Academy). robots is noindex,nofollow."
+  - "Financial PII: holdings + valuations must never be publicly reachable. Closing the gate is the priority."
+  - "When Access lands, tighten the API CORS allow-origin from '*' to https://stox.kh.group (apps/stox functions/api/[[route]].js, CORS const)."
+  - "Keep the gate broad (host-level) — do not enumerate per-route Access destinations (avoids the 5-destination ceiling Academy hit)."
+  - "Per-portfolio scoping stays app-side; do not push per-row scope into KH-RBAC schema."
+
+# Open questions for KH (surfaced, not assumed).
+open_questions:
+  - "Advisor (banker) email + exact read-only subset — needed before stox-advisor is applied."
+  - "Monika's email — needed before stox-monika is applied."
+  - "Leave /api/health public for uptime monitoring, or gate the whole host including it?"
+  - "Session duration for the Stay-on-PIN policy (Academy uses 24h) — same for stox?"
+
+# Reference documents.
+references:
+  kh_rbac_slot: "KH-RBAC docs/handoff/from-stox/README.md (slot opened, coordination answered)"
+  bus_coordination: "agent-bus id263 (ask) → id306 (KH-RBAC answer) → id316 (kh.group tick)"
+  academy_example: "KH-RBAC docs/handoff/from-academy/access-requirements.yaml (schema v1.1 reference)"
+  app_identity: "apps/stox/functions/api/[[route]].js (identity(), CORS, route table)"
+  adr_auth: "ADR-0007 Track B3 (Stay-on-PIN); ADR-0006 (layer separation); ADR-0002 (slug convention)"

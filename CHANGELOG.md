@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-06-27 16:40 UTC
+- stox access onboarding — **drafted the canonical KH-RBAC manifest for stox.kh.group.**
+  Added `reference/stox-handoff/access-requirements.yaml` (schema v1.1), the layer-3 source KH-RBAC
+  has been waiting on (bus id263 → id306 opened a `from-stox/` slot → this delivers). Kept in the
+  non-deployed `reference/` dir, not `apps/stox/`: the stox Pages deploy uploads everything under
+  `apps/stox/`, so a manifest there would be served publicly and leak the owner emails (PII hard-rule). stox serves real
+  portfolio holdings yet is `noindex`-only (publicly reachable today); the manifest closes that gap
+  by declaring a single coarse gate: group **`stox-owner`** (`kh@kh-group.eu`, `kamil@hrbacek.net`,
+  `kamil.hrbacek@gmail.com`) → ALLOW on the whole host `stox.kh.group/*` (SPA + `/api/*`), interim
+  auth **Stay-on-PIN** (email OTP, ADR-0007 B3). No anonymous role — unlike Academy, stox has no
+  public surface, so one host-level gate is correct (and dodges the 5-destination CF Access ceiling).
+  `stox-advisor` (banker, read-only) + `stox-monika` (spouse subset) are declared for planning but
+  phase B / no members yet. **Per-portfolio scoping stays app-side** (confirmed id306 Q2): KH-RBAC
+  owns coarse "can reach stox at all"; per-row owner=all / Monika=subset / advisor=read-only lives in
+  a future `kh-stox` D1 members table keyed on group membership (offboarding-safe), matching
+  `identity()` + the HOLDINGS keys. Paths, app-side authZ, constraints (tighten API CORS `*` →
+  `https://stox.kh.group` when Access lands), and four open questions for KH (advisor/Monika emails,
+  health-endpoint visibility, session duration) all captured. YAML validated (`yaml.safe_load`).
+  Updated `apps/stox/README.md` (new Access/gating section). **This is a PROPOSAL** — the live CF
+  Access apply (create the group + policy) is a KH hard-gate; no infra touched. Next: ping KH-RBAC
+  on the bus that the manifest is ready, then resume stox B2 live domains (`/watchlist` or `/yields`).
+
 ## 2026-06-27 13:41 UTC
 - stox B2 (fifth live domain) — **the AI recommendation cards now flow through the live overlay.**
   Wired `/api/advisor` through the same fail-safe `khLive()` overlay as news/signals. The advisor
