@@ -17,10 +17,12 @@ polish is owner-driven; don't restyle without a heads-up.
   /sources`. Wired into the frontend **per domain** via the fail-safe `khLive()` overlay (inline
   data is always the base; a live `/api` upgrade re-renders a section on success, any failure keeps
   inline). Live so far: **`/news`** (B1), **`/fx`** (B2 — live ECB rates drive a whole-app recompute
-  via `recomputeFX()`) and **`/holdings`** (B2 — live positions for the active portfolio mutate `H`
-  in place then run the same `recomputeFX()`; mock today, a bank-export adapter later). Other domains
-  still read inline until wired; swap a handler body for a real adapter (bank export, Yahoo Finance,
-  AI engine) then point its `khLive()` at it. The holdings currency/region filter universes are
+  via `recomputeFX()`), **`/holdings`** (B2 — live positions for the active portfolio mutate `H`
+  in place then run the same `recomputeFX()`; mock today, a bank-export adapter later) and
+  **`/signals`** (B2 — the AI signal-strength meters; `renderSignals()` re-renders only that section,
+  like news; mock today, the signal engine later). Other domains still read inline until wired; swap
+  a handler body for a real adapter (bank export, Yahoo Finance, AI engine) then point its `khLive()`
+  at it. The holdings currency/region filter universes are
   rebuilt from the live rows inside `recomputeFX()` (`rebuildFilterUniverses()`), so a payload that
   introduces a new currency/region grows its filter chip and one that drops it loses the chip (an
   active filter whose value disappears falls back to **All**).

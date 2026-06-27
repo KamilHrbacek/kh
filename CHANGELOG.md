@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-06-27 10:39 UTC
+- stox B2 (fourth live domain) — **AI signal-strength meters now flow through the live overlay.**
+  Wired `/api/signals` through the same fail-safe `khLive()` overlay as news: the inline meter
+  render is refactored into a re-callable `renderSignals(sig)` (called inline at first paint,
+  re-called by the overlay), and a new `khLive('signals', '/signals', …)` block maps the API's
+  `[{name,score}]` back to the inline `[name,score]` tuple, keeps `SIG` canonical, and re-renders
+  **only the meters** — never the money/recompute path (signals carry no currency). Fail-safe by
+  construction: a non-array (e.g. a 404 object), empty, malformed (any row missing `name` or with a
+  score outside 0..100), identical (mock-fallback) or failed payload triggers no re-render and the
+  inline meters stay on screen (`khLive` already swallows fetch/JSON errors). Mock today matches
+  inline, so this is a no-op live and a proven path for the signal engine to light up. Verified:
+  `node --check` on the full inline script (syntax OK) + a 10-case unit test over the apply logic
+  (identical→no churn; live diff→re-render + `SIG` updated; empty/bad-row/score>100/score<0/
+  non-numeric/non-array→inline retained; new engine shape→re-render). Also bumped the stale footer
+  build stamp (header + footer) from `2026.06.22-1` to `2026.06.27-1 · 10:39 UTC`.
+
 ## 2026-06-27 07:36 UTC
 - stox B2 (holdings filter universes) — **live holdings payloads now grow/shrink the currency &
   region filter chips.** Previously `FCCYS`/`FREGS` were `const`, snapshotted from the inline rows

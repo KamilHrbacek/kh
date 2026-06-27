@@ -475,7 +475,7 @@ body{
 
     <div class="foot">
       <div class="khend"><svg class="khe" viewBox="1130 800 1260 900" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(4.16667,0,0,4.16667,261.577,49.4367)"><g transform="matrix(1,0,0,1,256.329,274.17)"><path d="M0,-83.008L0,106.219L-34.816,106.219L-34.816,-83.008L0,-83.008Z"></path></g><g transform="matrix(1,0,0,1,383.046,304.447)"><path d="M0,-37.343L76.952,-37.343L76.952,-113.285L111.774,-113.285L111.774,75.942L76.952,75.942L76.952,-5.302L0,-5.302"></path></g><g transform="matrix(1,0,0,1,387.995,380.389)"><path d="M0,-189.227L-40.622,-189.227L-94.752,-107.226L-103.298,-94.614L-94.752,-82.001L-40.622,0L0,0L-63.721,-94.614L0,-189.227Z"></path></g></g></svg><span>stox · a KH tool · private dashboard</span></div>
-      <span class="buildtag">build 2026.06.22-1 · 11:50 UTC</span>
+      <span class="buildtag">build 2026.06.27-1 · 10:39 UTC</span>
     </div>
   </div>
 </main>
@@ -494,7 +494,7 @@ body{
       <div class="addhint" id="addHint"></div>
     </div>
     <div id="watchTbl"></div>
-    <div class="foot"><div class="khend"><svg class="khe" viewBox="1130 800 1260 900" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(4.16667,0,0,4.16667,261.577,49.4367)"><g transform="matrix(1,0,0,1,256.329,274.17)"><path d="M0,-83.008L0,106.219L-34.816,106.219L-34.816,-83.008L0,-83.008Z"></path></g><g transform="matrix(1,0,0,1,383.046,304.447)"><path d="M0,-37.343L76.952,-37.343L76.952,-113.285L111.774,-113.285L111.774,75.942L76.952,75.942L76.952,-5.302L0,-5.302"></path></g><g transform="matrix(1,0,0,1,387.995,380.389)"><path d="M0,-189.227L-40.622,-189.227L-94.752,-107.226L-103.298,-94.614L-94.752,-82.001L-40.622,0L0,0L-63.721,-94.614L0,-189.227Z"></path></g></g></svg><span>sandbox · hypothetical · not advice</span></div><span class="buildtag">build 2026.06.22-1 · 11:50 UTC</span></div>
+    <div class="foot"><div class="khend"><svg class="khe" viewBox="1130 800 1260 900" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(4.16667,0,0,4.16667,261.577,49.4367)"><g transform="matrix(1,0,0,1,256.329,274.17)"><path d="M0,-83.008L0,106.219L-34.816,106.219L-34.816,-83.008L0,-83.008Z"></path></g><g transform="matrix(1,0,0,1,383.046,304.447)"><path d="M0,-37.343L76.952,-37.343L76.952,-113.285L111.774,-113.285L111.774,75.942L76.952,75.942L76.952,-5.302L0,-5.302"></path></g><g transform="matrix(1,0,0,1,387.995,380.389)"><path d="M0,-189.227L-40.622,-189.227L-94.752,-107.226L-103.298,-94.614L-94.752,-82.001L-40.622,0L0,0L-63.721,-94.614L0,-189.227Z"></path></g></g></svg><span>sandbox · hypothetical · not advice</span></div><span class="buildtag">build 2026.06.27-1 · 10:39 UTC</span></div>
   </div>
 </main>
 
@@ -1310,8 +1310,12 @@ document.getElementById('news').innerHTML=NEWS.map(n=>
   '<span class="chip '+(n[3]==='up'?'up':'down')+'" style="margin-left:8px">'+n[2]+'</span></div></div>').join('');
 
 const SIG=[['US large-cap tech',78],['Semiconductors',41],['EU industrials',63],['EV / Tesla',28]];
-document.getElementById('signal').innerHTML=SIG.map((s,i)=>
-  '<div><div class="sgrow"><span class="sgname"><b>'+s[0]+'</b></span><span class="num">'+s[1]+' / 100</span></div><div class="meter"><i style="width:'+s[1]+'%;background:'+BRASS[i%BRASS.length]+'"></i></div></div>').join('');
+/* idempotent re-render of just the signal meters — called inline now, re-called by the live overlay */
+function renderSignals(sig){
+  document.getElementById('signal').innerHTML=sig.map((s,i)=>
+    '<div><div class="sgrow"><span class="sgname"><b>'+s[0]+'</b></span><span class="num">'+s[1]+' / 100</span></div><div class="meter"><i style="width:'+s[1]+'%;background:'+BRASS[i%BRASS.length]+'"></i></div></div>').join('');
+}
+renderSignals(SIG);
 
 const RECS=[
   ['Add','EMVL','Emerging',82,'EM value momentum is building and a softer USD is a tailwind. Adds to a winning but under-weight book.',[['Bloomberg',30,'+'],['Reuters',22,'+'],['EM Weekly · newsletter',28,'+'],['Perplexity synth',20,'~']]],
@@ -1551,6 +1555,28 @@ khLive('holdings', '/holdings?pf='+encodeURIComponent(PFNAME), list=>{
   if(same) return;                                                 // identical (e.g. mock) → no churn
   H.length=0; for(const r of next) H.push(r);                      // mutate active portfolio in place
   recomputeFX();                                                   // whole-app money refresh (proven path)
+});
+
+/* Signals (B2): the AI signal-strength meters, wired through the same fail-safe overlay as news.
+   /api/signals serves [{name,score}] — the signal engine fills this for real later; mock today,
+   matching inline, so this is visually identical and just proves the live path + fallback. Like
+   news it re-renders ONLY its own section (renderSignals), never the money path. Fail-safe by
+   construction: an empty, malformed (bad row, score out of 0..100), identical (mock-fallback) or
+   failed payload triggers no re-render and the inline meters stay on screen (khLive already
+   swallows fetch/JSON errors). */
+khLive('signals', '/signals', rows=>{
+  if(!Array.isArray(rows) || !rows.length) return;                 // empty/malformed → keep inline
+  const next=[];
+  for(const s of rows){
+    if(!s || typeof s.name!=='string') return;                     // any bad row → reject whole payload
+    const sc=+s.score;
+    if(!isFinite(sc) || sc<0 || sc>100) return;                    // out-of-range score → keep inline
+    next.push([s.name, Math.round(sc)]);
+  }
+  const same = next.length===SIG.length && next.every((r,i)=> r[0]===SIG[i][0] && r[1]===SIG[i][1]);
+  if(same) return;                                                 // identical (e.g. mock) → no churn
+  SIG.length=0; for(const r of next) SIG.push(r);                  // keep SIG canonical for re-renders
+  renderSignals(SIG);                                              // re-render just the meters
 });
 </script>
 </body>
