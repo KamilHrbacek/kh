@@ -14,8 +14,11 @@ polish is owner-driven; don't restyle without a heads-up.
 - `index.html` — the dashboard; data is **inline** (mock + some real), rendered synchronously.
 - `functions/api/[[route]].js` — the `/api/*` scaffold (Pages Functions) returning the same mock
   shapes: `/me /portfolios /holdings /fx /yields /watchlist /news /signals /recommendations
-  /sources`. **Not yet consumed by the frontend** — Phase B will wire it per domain (with inline as
-  fallback); swap a handler body for a real adapter (bank export, Yahoo Finance, FX, AI engine) then.
+  /sources`. Wired into the frontend **per domain** via the fail-safe `khLive()` overlay (inline
+  data is always the base; a live `/api` upgrade re-renders a section on success, any failure keeps
+  inline). Live so far: **`/news`** (B1) and **`/fx`** (B2 — live ECB rates drive a whole-app
+  recompute via `recomputeFX()`). Other domains still read inline until wired; swap a handler body
+  for a real adapter (bank export, Yahoo Finance, AI engine) then point its `khLive()` at it.
 - `favicon-stox.svg` — gold `#c9a24a` KH mark; `favicon.svg` — fallback.
 - `assets/`, `maps/` — gold textures + the map SVG.
 

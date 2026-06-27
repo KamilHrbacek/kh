@@ -584,15 +584,20 @@ function cur(n,ccy){try{return new Intl.NumberFormat(LOC[ccy]||'en-US',{style:'c
 const sgn=n=>(n>=0?'+':'−')+'€'+Math.abs(n).toLocaleString('en-US',{maximumFractionDigits:0});
 const pct=n=>(n>=0?'+':'−')+Math.abs(n).toFixed(2)+'%';
 
-let tot=0,inv=0,day=0;
-const rows=H.map(h=>{
-  const [sym,nm,type,reg,ccy,val,plp,dp]=h;
-  const costN=val/(1+plp/100), plN=val-costN;
-  const valEur=val*FX[ccy], costEur=costN*FX[ccy], pl=valEur-costEur, dayAbs=valEur*dp/100;
-  tot+=valEur; inv+=costEur; day+=dayAbs;
-  return {sym,nm,type,reg,ccy,val,costN,plN,dp,valEur,pl,plpct:plp,dayAbs};
-});
-const plTot=tot-inv, dayPct=day/(tot-day)*100;
+let tot=0,inv=0,day=0,plTot=0,dayPct=0,rows=[];
+/* derive the FX-dependent holdings figures; re-callable so live FX can recompute them */
+function computeHoldings(){
+  tot=0; inv=0; day=0;
+  rows=H.map(h=>{
+    const [sym,nm,type,reg,ccy,val,plp,dp]=h;
+    const costN=val/(1+plp/100), plN=val-costN;
+    const valEur=val*FX[ccy], costEur=costN*FX[ccy], pl=valEur-costEur, dayAbs=valEur*dp/100;
+    tot+=valEur; inv+=costEur; day+=dayAbs;
+    return {sym,nm,type,reg,ccy,val,costN,plN,dp,valEur,pl,plpct:plp,dayAbs};
+  });
+  plTot=tot-inv; dayPct=day/(tot-day)*100;
+}
+computeHoldings();
 
 document.getElementById('tot').textContent=eur(tot);
 let BASE='USD';
@@ -977,9 +982,12 @@ function tbl(type){
     '<span class="r ret"><span class="chip '+(r.plpct>=0?'up':'down')+'">'+pct(r.plpct)+'</span></span></div>'
   ).join('');
 }
-document.getElementById('hold').innerHTML=
-  '<div class="hgrp">Mutual fund</div>'+head+tbl('Fund')+
-  '<div class="hgrp">ETF</div>'+head+tbl('ETF');
+function renderHoldTable(){
+  document.getElementById('hold').innerHTML=
+    '<div class="hgrp">Mutual fund</div>'+head+tbl('Fund')+
+    '<div class="hgrp">ETF</div>'+head+tbl('ETF');
+  wireMini();
+}
 
 /* make the in-row mini sparklines interactive too — dot + value on hover/touch */
 function wireMini(root){
@@ -997,7 +1005,7 @@ function wireMini(root){
     svg.addEventListener('pointerleave',()=>cell.classList.remove('live'));
   });
 }
-wireMini();
+renderHoldTable();
 
 /* currency filter (books) — drill into one currency, hide empty groups */
 function syncGroups(){
@@ -1469,6 +1477,33 @@ khLive('news', '/news', rows=>{
   document.getElementById('news').innerHTML = rows.map(n=>
     '<div class="nitem"><span class="nsrc">'+n.src+'</span><div class="ntext">'+n.text+
     '<span class="chip '+(n.dir==='up'?'up':'down')+'" style="margin-left:8px">'+n.tickers+'</span></div></div>').join('');
+});
+
+/* FX (B2): the first live data domain wired to actually flow on screen. /api/fx serves
+   live ECB rates (Frankfurter) with a server-side mock fallback. Here we mutate FX in
+   place and run the whole-app recompute — header totals, holdings table, books summary,
+   hero chart, donuts — so live rates propagate everywhere the dashboard reasons in money.
+   Fail-safe by construction: a malformed, identical, or failed payload triggers NO
+   recompute and the inline base rates stay on screen (khLive already swallows fetch/JSON
+   errors). The recompute's always-on core (totals + table + base) runs first; secondary
+   surfaces (chart, donuts) are guarded so they can never throw the page into an odd state. */
+function recomputeFX(){
+  computeHoldings();
+  renderHoldTable();
+  applyBase(BASE);
+  buildChips(); setBookSum();
+  const stIn=document.getElementById('stakeInput'); if(stIn) stIn.value=Math.round(STAKE/FX[BASE]);
+  if(typeof drawChart==='function'){ try{ drawChart(); }catch(e){} }
+  if(document.getElementById('fReg')){ try{ renderDonuts(); }catch(e){} }  // composition modal, if open
+}
+khLive('fx', '/fx', d=>{
+  if(!d || +d.EUR!==1) return;                                   // base must be EUR=1
+  const next={EUR:1, USD:+d.USD, JPY:+d.JPY, CZK:+d.CZK};
+  for(const k of ['USD','JPY','CZK']){ if(!isFinite(next[k]) || next[k]<=0) return; }  // reject bad rates → keep inline
+  const changed=['USD','JPY','CZK'].some(k=>Math.abs(next[k]-FX[k])/FX[k] > 1e-4);
+  if(!changed) return;                                           // identical (e.g. mock-fallback) → no churn
+  Object.assign(FX, next);
+  recomputeFX();
 });
 </script>
 </body>

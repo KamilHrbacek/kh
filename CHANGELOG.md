@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-06-27 01:47 UTC
+- stox B2 (frontend) — **live FX now flows on screen.** Wired `/api/fx` through the fail-safe
+  `khLive()` overlay with a whole-app recompute: holdings derivation is now a re-callable
+  `computeHoldings()`, the holdings table a re-callable `renderHoldTable()`, and a new
+  `recomputeFX()` mutates `FX` in place then re-renders header totals, holdings table, base-currency
+  column, books summary, the hero chart and (if open) the composition donuts. Fail-safe by
+  construction: the live handler recomputes **only** on a valid, materially-different payload —
+  a malformed, identical (mock-fallback), 404, or SPA-HTML response triggers no recompute and the
+  inline base rates stay on screen. Verified in jsdom across five paths (live → re-render
+  547,358→557,094 base; identical / html / 404 / bad-rates → inline retained, 0 errors, page never
+  blanks). News stays wired; FX is the first live data domain visibly flowing. Next B2 step: wire
+  holdings off `/api/holdings` through the same recompute path.
+
 ## 2026-06-26 22:52 UTC
 - stox B2 (start) — `/api/fx` now returns **live ECB rates** via Frankfurter (no key), fetched
   server-side in the Pages Function and edge-cached ~1h, with a **fall back to the mock rates** on
