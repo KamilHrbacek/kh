@@ -1469,9 +1469,9 @@ async function khLive(name, path, apply){
 }
 /* Domains wired through the overlay. Each apply() must be safe to run AFTER the
    inline render (an idempotent re-render of that section only).
-   FX/holdings are intentionally NOT here yet — they feed the whole dashboard and
-   need a fuller refresh path (Phase B2). News is mock today; /api/news returns the
-   same shape, so this is visually identical and just proves the live path + fallback. */
+   News re-renders just its own list; FX and holdings feed the whole dashboard and run
+   the recompute path below (Phase B2). News is mock today; /api/news returns the same
+   shape, so this is visually identical and just proves the live path + fallback. */
 khLive('news', '/news', rows=>{
   if(!Array.isArray(rows) || !rows.length) return;
   document.getElementById('news').innerHTML = rows.map(n=>
@@ -1504,6 +1504,39 @@ khLive('fx', '/fx', d=>{
   if(!changed) return;                                           // identical (e.g. mock-fallback) → no churn
   Object.assign(FX, next);
   recomputeFX();
+});
+
+/* Holdings (B2): the second live data domain, wired through the same fail-safe overlay +
+   recompute as FX. /api/holdings?pf=<name> serves the portfolio's positions (mock today,
+   a bank-export adapter later). We mutate the active portfolio array H in place then run
+   recomputeFX(), so live positions propagate to header totals, the holdings table, the
+   base-currency column and the books summary (and, guarded, the hero chart + donuts) —
+   everywhere the dashboard reasons in money. Fail-safe by construction: we re-render ONLY
+   on a well-formed, materially-different payload for THIS portfolio; an empty, malformed,
+   identical (mock-fallback), 404 or SPA-HTML response triggers no recompute and the inline
+   positions stay on screen (khLive already swallows fetch/JSON errors).
+   Note: the currency/region filter universes (FCCYS/FREGS) are snapshotted at init, so a
+   live payload that introduces a NEW currency or region won't add a filter chip yet —
+   rebuilding those is the next holdings step. Today's payload matches inline, so this is
+   a no-op live and a proven path for the bank-export adapter to light up. */
+khLive('holdings', '/holdings?pf='+encodeURIComponent(PFNAME), list=>{
+  if(!Array.isArray(list) || !list.length) return;                 // empty/malformed → keep inline
+  const next=[];
+  for(const h of list){                                            // map API objects → inline tuple shape
+    if(!h || typeof h.sym!=='string') return;                      // any bad row → reject whole payload
+    const val=+h.value, rp=+h.returnPct, dp=+h.dayPct;
+    if(!isFinite(val) || val<=0 || !isFinite(rp) || !isFinite(dp)) return;
+    next.push([h.sym, h.name||h.sym, h.type||'ETF', h.region||'', h.ccy||'EUR', val, rp, dp]);
+  }
+  const same = next.length===H.length && next.every((r,i)=>{       // materially different vs current?
+    const c=H[i];
+    return r[0]===c[0] && r[2]===c[2] && r[4]===c[4]
+        && Math.abs(r[5]-c[5])/(Math.abs(c[5])||1) < 1e-6
+        && Math.abs(r[6]-c[6]) < 1e-6 && Math.abs(r[7]-c[7]) < 1e-6;
+  });
+  if(same) return;                                                 // identical (e.g. mock) → no churn
+  H.length=0; for(const r of next) H.push(r);                      // mutate active portfolio in place
+  recomputeFX();                                                   // whole-app money refresh (proven path)
 });
 </script>
 </body>

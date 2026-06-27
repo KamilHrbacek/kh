@@ -1,5 +1,20 @@
 # Changelog
 
+## 2026-06-27 04:40 UTC
+- stox B2 (second live domain) — **live holdings now flow on screen.** Wired `/api/holdings?pf=<name>`
+  through the same fail-safe `khLive()` overlay + whole-app recompute that FX uses: on a well-formed,
+  materially-different payload for the active portfolio we map the API objects back to the inline tuple
+  shape, mutate the active portfolio array `H` in place, then call `recomputeFX()` so live positions
+  propagate to header totals, the holdings table, the base-currency column and the books summary (and,
+  guarded, the hero chart + donuts). Fail-safe by construction: an empty, malformed (bad/≤0 value, bad
+  return/day, missing sym), identical (mock-fallback), 404 or SPA-HTML response triggers no recompute and
+  the inline positions stay on screen. Verified in jsdom across five paths (live +10% → re-render
+  547,358→602,093 base USD; identical / 404 / html / malformed → inline retained, 0 errors, page never
+  blanks). Known follow-up: the currency/region filter universes (FCCYS/FREGS) are snapshotted at init,
+  so a payload introducing a NEW currency/region won't add a filter chip yet — rebuilding those is the
+  next holdings step. Today's payload matches inline, so this is a no-op live and a proven path for the
+  bank-export adapter to light up.
+
 ## 2026-06-27 01:47 UTC
 - stox B2 (frontend) — **live FX now flows on screen.** Wired `/api/fx` through the fail-safe
   `khLive()` overlay with a whole-app recompute: holdings derivation is now a re-callable

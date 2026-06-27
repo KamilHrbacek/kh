@@ -16,9 +16,13 @@ polish is owner-driven; don't restyle without a heads-up.
   shapes: `/me /portfolios /holdings /fx /yields /watchlist /news /signals /recommendations
   /sources`. Wired into the frontend **per domain** via the fail-safe `khLive()` overlay (inline
   data is always the base; a live `/api` upgrade re-renders a section on success, any failure keeps
-  inline). Live so far: **`/news`** (B1) and **`/fx`** (B2 — live ECB rates drive a whole-app
-  recompute via `recomputeFX()`). Other domains still read inline until wired; swap a handler body
-  for a real adapter (bank export, Yahoo Finance, AI engine) then point its `khLive()` at it.
+  inline). Live so far: **`/news`** (B1), **`/fx`** (B2 — live ECB rates drive a whole-app recompute
+  via `recomputeFX()`) and **`/holdings`** (B2 — live positions for the active portfolio mutate `H`
+  in place then run the same `recomputeFX()`; mock today, a bank-export adapter later). Other domains
+  still read inline until wired; swap a handler body for a real adapter (bank export, Yahoo Finance,
+  AI engine) then point its `khLive()` at it. Note: the holdings currency/region filter universes are
+  snapshotted at init — a live payload with a new currency/region won't add a filter chip until that
+  rebuild lands (next holdings step).
 - `favicon-stox.svg` — gold `#c9a24a` KH mark; `favicon.svg` — fallback.
 - `assets/`, `maps/` — gold textures + the map SVG.
 
