@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-06-28 07:39 UTC
+- stox B2 — **wired `/api/sources` through the fail-safe `khLive()` overlay (8th and final live
+  data domain**, after news/fx/holdings/signals/advisor/yields/watchlist — every data domain now
+  flows through the overlay). The Settings data-sources mixer (the catalogue of feeds the AI weighs
+  and the user can tune) now upgrades from a live `[{name,weight,status,lastUpdate}]` payload. The
+  apply is deliberately **additive**: a live feed the user does not already have is introduced into
+  `SET.sources` at its catalogue weight, but an existing feed's weight is **never overwritten** and
+  a feed absent from the live payload is **never removed** — so a live refresh can grow the mixer
+  (a genuinely new source lights up) yet can never clobber the user's tuning or drop a feed they
+  rely on (a user-set "off"/0 weight stays off). Touches only its own surface (`renderSet()`), never
+  the money path. Today's mock is a subset of the inline catalogue, so the live path is a visual
+  no-op and a proven hook for the source registry to light up by swapping the `/sources` handler
+  body. Surfacing feed health/`status` in the mixer UI is a separate (non-no-op) increment, left for
+  later. Frontend-only (`apps/stox/index.html`); build stamp `2026.06.28-2`; `node --check` clean;
+  17-case unit test of the apply (no-op subset / empty / non-array / bad-row-rejects-all /
+  out-of-range + negative reject / new-feed-add + round / existing-preserved / absent-not-removed /
+  user-off-stays-off) all green.
+
 ## 2026-06-28 04:35 UTC
 - stox B2 — **wired `/api/watchlist` through the fail-safe `khLive()` overlay (7th live data domain**,
   after news/fx/holdings/signals/advisor/yields). The sandbox watchlist (flagged-but-unbought ideas

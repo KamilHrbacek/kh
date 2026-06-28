@@ -475,7 +475,7 @@ body{
 
     <div class="foot">
       <div class="khend"><svg class="khe" viewBox="1130 800 1260 900" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(4.16667,0,0,4.16667,261.577,49.4367)"><g transform="matrix(1,0,0,1,256.329,274.17)"><path d="M0,-83.008L0,106.219L-34.816,106.219L-34.816,-83.008L0,-83.008Z"></path></g><g transform="matrix(1,0,0,1,383.046,304.447)"><path d="M0,-37.343L76.952,-37.343L76.952,-113.285L111.774,-113.285L111.774,75.942L76.952,75.942L76.952,-5.302L0,-5.302"></path></g><g transform="matrix(1,0,0,1,387.995,380.389)"><path d="M0,-189.227L-40.622,-189.227L-94.752,-107.226L-103.298,-94.614L-94.752,-82.001L-40.622,0L0,0L-63.721,-94.614L0,-189.227Z"></path></g></g></svg><span>stox · a KH tool · private dashboard</span></div>
-      <span class="buildtag">build 2026.06.28-1 · 04:35 UTC</span>
+      <span class="buildtag">build 2026.06.28-2 · 07:39 UTC</span>
     </div>
   </div>
 </main>
@@ -494,7 +494,7 @@ body{
       <div class="addhint" id="addHint"></div>
     </div>
     <div id="watchTbl"></div>
-    <div class="foot"><div class="khend"><svg class="khe" viewBox="1130 800 1260 900" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(4.16667,0,0,4.16667,261.577,49.4367)"><g transform="matrix(1,0,0,1,256.329,274.17)"><path d="M0,-83.008L0,106.219L-34.816,106.219L-34.816,-83.008L0,-83.008Z"></path></g><g transform="matrix(1,0,0,1,383.046,304.447)"><path d="M0,-37.343L76.952,-37.343L76.952,-113.285L111.774,-113.285L111.774,75.942L76.952,75.942L76.952,-5.302L0,-5.302"></path></g><g transform="matrix(1,0,0,1,387.995,380.389)"><path d="M0,-189.227L-40.622,-189.227L-94.752,-107.226L-103.298,-94.614L-94.752,-82.001L-40.622,0L0,0L-63.721,-94.614L0,-189.227Z"></path></g></g></svg><span>sandbox · hypothetical · not advice</span></div><span class="buildtag">build 2026.06.28-1 · 04:35 UTC</span></div>
+    <div class="foot"><div class="khend"><svg class="khe" viewBox="1130 800 1260 900" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(4.16667,0,0,4.16667,261.577,49.4367)"><g transform="matrix(1,0,0,1,256.329,274.17)"><path d="M0,-83.008L0,106.219L-34.816,106.219L-34.816,-83.008L0,-83.008Z"></path></g><g transform="matrix(1,0,0,1,383.046,304.447)"><path d="M0,-37.343L76.952,-37.343L76.952,-113.285L111.774,-113.285L111.774,75.942L76.952,75.942L76.952,-5.302L0,-5.302"></path></g><g transform="matrix(1,0,0,1,387.995,380.389)"><path d="M0,-189.227L-40.622,-189.227L-94.752,-107.226L-103.298,-94.614L-94.752,-82.001L-40.622,0L0,0L-63.721,-94.614L0,-189.227Z"></path></g></g></svg><span>sandbox · hypothetical · not advice</span></div><span class="buildtag">build 2026.06.28-2 · 07:39 UTC</span></div>
   </div>
 </main>
 
@@ -1696,6 +1696,36 @@ khLive('watchlist', '/watchlist', list=>{
   }
   selW.clear(); for(const s of keep) selW.add(s);
   renderWatch();                                                   // re-render the watchlist + totals
+});
+
+/* Sources (B2): the data-sources mix in Settings — the catalogue of feeds the AI weighs and
+   the user can tune — wired through the same fail-safe overlay as the rest (8th and final live
+   data domain, after news/fx/holdings/signals/advisor/yields/watchlist). /api/sources serves
+   [{name,weight,status,lastUpdate}] — the source registry fills this for real later; mock today
+   is a subset of the inline catalogue, so this is visually identical and just proves the live
+   path + fallback. The apply is deliberately ADDITIVE: a live source the user does not already
+   have is introduced into SET.sources at its catalogue weight, but an existing source's weight is
+   NEVER overwritten and a source absent from the live payload is NEVER removed — so a live refresh
+   can grow the mixer (a genuinely new feed lights up) but can never clobber the user's tuning or
+   drop a feed they rely on. Like the other non-money applies it re-renders ONLY its own surface
+   (renderSet → the Settings mixer) and stays in memory (a user edit persists it via saveSet, as
+   today). Fail-safe by construction: an empty, malformed (bad row, weight out of 0..100), all-known
+   (mock-fallback — nothing new), 404 or SPA-HTML payload changes nothing and the inline catalogue
+   stays on screen (khLive already swallows fetch/JSON errors). Surfacing source health/status in
+   the mixer UI is a separate (non-no-op) increment, left for later. */
+khLive('sources', '/sources', list=>{
+  if(!Array.isArray(list) || !list.length) return;                 // empty/malformed → keep inline
+  const add={};
+  for(const s of list){
+    if(!s || typeof s.name!=='string' || !s.name) return;          // any bad row → reject whole payload
+    const w=+s.weight;
+    if(!isFinite(w) || w<0 || w>100) return;                       // out-of-range weight → keep inline
+    if(!(s.name in SET.sources)) add[s.name]=Math.round(w);        // only feeds the user doesn't have yet
+  }
+  const keys=Object.keys(add);
+  if(!keys.length) return;                                         // nothing new (e.g. mock subset) → no churn
+  for(const k of keys) SET.sources[k]=add[k];                      // additively introduce new catalogue feeds
+  renderSet();                                                     // re-render the Settings data-sources mixer
 });
 </script>
 </body>

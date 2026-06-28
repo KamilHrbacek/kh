@@ -31,9 +31,13 @@ polish is owner-driven; don't restyle without a heads-up.
   ideas; a live `[{sym,name,region,ccy,weeksAgo,entry,last,notional,dayPct}]` payload rebuilds the
   `wrows` model in place then `renderWatch()`, preserving ticks for surviving symbols and defaulting
   new ideas to selected, reading FX for the would-be P/L but never writing the money path; mock today,
-  a real watchlist store / D1 later). Other domains (`/sources`) still read inline until wired; swap
-  a handler body for a real adapter (bank export, Yahoo Finance, AI engine) then point its `khLive()`
-  at it. The holdings currency/region filter universes are
+  a real watchlist store / D1 later) and **`/sources`** (B2 — the Settings data-sources mixer; a live
+  `[{name,weight,status,lastUpdate}]` payload is merged **additively** into `SET.sources` then
+  `renderSet()` — a genuinely new feed lights up, but an existing weight is never overwritten and an
+  absent feed never removed, so a live refresh can grow the mixer yet never clobber the user's tuning;
+  a real source registry later). **All eight data domains are now wired** — every domain flows through
+  the overlay. To go live, swap a handler body for a real adapter (bank export, Yahoo Finance, AI
+  engine); the frontend is already pointed at it via `khLive()`. The holdings currency/region filter universes are
   rebuilt from the live rows inside `recomputeFX()` (`rebuildFilterUniverses()`), so a payload that
   introduces a new currency/region grows its filter chip and one that drops it loses the chip (an
   active filter whose value disappears falls back to **All**).
