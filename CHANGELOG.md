@@ -1,5 +1,22 @@
 # Changelog
 
+## 2026-06-28 04:35 UTC
+- stox B2 — **wired `/api/watchlist` through the fail-safe `khLive()` overlay (7th live data domain**,
+  after news/fx/holdings/signals/advisor/yields). The sandbox watchlist (flagged-but-unbought ideas
+  and what they would have done) now upgrades from a live
+  `[{sym,name,region,ccy,weeksAgo,entry,last,notional,dayPct}]` payload: a well-formed, materially-
+  different payload rebuilds the `wrows` model in place and `renderWatch()`s, while an empty,
+  malformed (bad row, non-finite/non-positive price, unknown currency), identical (mock-fallback),
+  404 or SPA-HTML response changes nothing and the inline ideas stay on screen. Ticks (`selW`) are
+  preserved for surviving symbols and brand-new ideas default to selected, so a live refresh never
+  strands the user's selection. Reads FX for the would-be P/L but never writes the money path. Mock
+  today matches inline, so the live path is a visual no-op and a proven hook for a real watchlist
+  store (D1/KV — the `POST /watchlist` already stubs persistence) to light up by swapping the
+  `/watchlist` handler body. Only `/sources` (metadata) now reads inline unwired. Frontend-only
+  (`apps/stox/index.html`); build stamp `2026.06.28-1`; `node --check` clean; 13-case unit test of
+  the apply (no-op/empty/bad-price/unknown-ccy reject, materially-different rebuild, tick-preservation
+  across deselect + new idea) all green.
+
 ## 2026-06-27 19:39 UTC
 - stox B2 — **wired `/api/yields` through the fail-safe `khLive()` overlay (6th live data domain**,
   after news/fx/holdings/signals/advisor). The per-holding dividend yields behind the Income modal

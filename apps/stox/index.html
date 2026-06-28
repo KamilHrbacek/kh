@@ -475,7 +475,7 @@ body{
 
     <div class="foot">
       <div class="khend"><svg class="khe" viewBox="1130 800 1260 900" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(4.16667,0,0,4.16667,261.577,49.4367)"><g transform="matrix(1,0,0,1,256.329,274.17)"><path d="M0,-83.008L0,106.219L-34.816,106.219L-34.816,-83.008L0,-83.008Z"></path></g><g transform="matrix(1,0,0,1,383.046,304.447)"><path d="M0,-37.343L76.952,-37.343L76.952,-113.285L111.774,-113.285L111.774,75.942L76.952,75.942L76.952,-5.302L0,-5.302"></path></g><g transform="matrix(1,0,0,1,387.995,380.389)"><path d="M0,-189.227L-40.622,-189.227L-94.752,-107.226L-103.298,-94.614L-94.752,-82.001L-40.622,0L0,0L-63.721,-94.614L0,-189.227Z"></path></g></g></svg><span>stox · a KH tool · private dashboard</span></div>
-      <span class="buildtag">build 2026.06.27-2 · 13:41 UTC</span>
+      <span class="buildtag">build 2026.06.28-1 · 04:35 UTC</span>
     </div>
   </div>
 </main>
@@ -494,7 +494,7 @@ body{
       <div class="addhint" id="addHint"></div>
     </div>
     <div id="watchTbl"></div>
-    <div class="foot"><div class="khend"><svg class="khe" viewBox="1130 800 1260 900" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(4.16667,0,0,4.16667,261.577,49.4367)"><g transform="matrix(1,0,0,1,256.329,274.17)"><path d="M0,-83.008L0,106.219L-34.816,106.219L-34.816,-83.008L0,-83.008Z"></path></g><g transform="matrix(1,0,0,1,383.046,304.447)"><path d="M0,-37.343L76.952,-37.343L76.952,-113.285L111.774,-113.285L111.774,75.942L76.952,75.942L76.952,-5.302L0,-5.302"></path></g><g transform="matrix(1,0,0,1,387.995,380.389)"><path d="M0,-189.227L-40.622,-189.227L-94.752,-107.226L-103.298,-94.614L-94.752,-82.001L-40.622,0L0,0L-63.721,-94.614L0,-189.227Z"></path></g></g></svg><span>sandbox · hypothetical · not advice</span></div><span class="buildtag">build 2026.06.27-2 · 13:41 UTC</span></div>
+    <div class="foot"><div class="khend"><svg class="khe" viewBox="1130 800 1260 900" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(4.16667,0,0,4.16667,261.577,49.4367)"><g transform="matrix(1,0,0,1,256.329,274.17)"><path d="M0,-83.008L0,106.219L-34.816,106.219L-34.816,-83.008L0,-83.008Z"></path></g><g transform="matrix(1,0,0,1,383.046,304.447)"><path d="M0,-37.343L76.952,-37.343L76.952,-113.285L111.774,-113.285L111.774,75.942L76.952,75.942L76.952,-5.302L0,-5.302"></path></g><g transform="matrix(1,0,0,1,387.995,380.389)"><path d="M0,-189.227L-40.622,-189.227L-94.752,-107.226L-103.298,-94.614L-94.752,-82.001L-40.622,0L0,0L-63.721,-94.614L0,-189.227Z"></path></g></g></svg><span>sandbox · hypothetical · not advice</span></div><span class="buildtag">build 2026.06.28-1 · 04:35 UTC</span></div>
   </div>
 </main>
 
@@ -1654,6 +1654,48 @@ khLive('yields', '/yields', map=>{
   if(modal && modal.classList.contains('open') && sheet && sheet.querySelector('.incwrap')){
     try{ openIncome(); }catch(e){}                                 // Income modal open → re-render it live
   }
+});
+
+/* Watchlist (B2): the sandbox watchlist — flagged-but-unbought ideas and what they would
+   have done — wired through the same fail-safe overlay as holdings. /api/watchlist serves
+   [{sym,name,region,ccy,weeksAgo,entry,last,notional,dayPct}] — a real watchlist store
+   (D1/KV; the POST already stubs persistence) fills this later; mock today matches inline,
+   so this is visually identical and just proves the live path + fallback. We rebuild the
+   wrows model in place from a well-formed, materially-different payload then renderWatch();
+   ticks (selW) are preserved for surviving symbols and new ideas default to selected, so a
+   live refresh never strands the user's selection. This touches ONLY the watchlist view — it
+   reads FX for the would-be P/L but never writes the money path. Fail-safe by construction:
+   an empty, malformed (bad row, non-finite/non-positive price, unknown currency), identical
+   (mock-fallback), 404 or SPA-HTML payload triggers no rebuild and the inline ideas stay on
+   screen (khLive already swallows fetch/JSON errors). */
+khLive('watchlist', '/watchlist', list=>{
+  if(!Array.isArray(list) || !list.length) return;                 // empty/malformed → keep inline
+  const next=[];
+  for(const w of list){                                            // map API objects → inline tuple shape
+    if(!w || typeof w.sym!=='string') return;                      // any bad row → reject whole payload
+    const entry=+w.entry, last=+w.last, dp=+w.dayPct, wk=+w.weeksAgo;
+    const ccy=typeof w.ccy==='string'?w.ccy:'';
+    if(!isFinite(entry) || entry<=0 || !isFinite(last) || last<=0) return;  // bad price → keep inline
+    if(!isFinite(dp) || !isFinite(wk) || wk<0) return;             // bad day%/age → keep inline
+    if(!FX[ccy]) return;                                           // unknown currency → keep inline
+    next.push([w.sym, w.name||w.sym, w.region||'—', ccy, wk, entry, last, dp]);
+  }
+  const same = next.length===wrows.length && next.every((r,i)=>{   // materially different vs current?
+    const c=wrows[i];
+    return r[0]===c.sym && r[3]===c.ccy
+        && Math.abs(r[5]-c.entry) < 1e-9 && Math.abs(r[6]-c.last) < 1e-9;
+  });
+  if(same) return;                                                 // identical (e.g. mock) → no churn
+  const had=new Set(wrows.map(w=>w.sym));                          // which syms were on screen
+  const keep=new Set([...selW].filter(s=>next.some(r=>r[0]===s))); // preserve ticks for surviving syms
+  wrows.length=0;                                                  // mutate the watchlist model in place
+  for(const [sym,nm,reg,ccy,wk,entry,last,dp] of next){
+    const pc=(last-entry)/entry*100, pl=STAKE*pc/100;             // same would-be P/L formula as the inline map
+    wrows.push({sym,nm,reg,ccy,wk,entry,last,notional:STAKE,dp,pl,pc,since:dAgo(wk)});
+    if(!had.has(sym)) keep.add(sym);                               // a brand-new idea defaults to selected
+  }
+  selW.clear(); for(const s of keep) selW.add(s);
+  renderWatch();                                                   // re-render the watchlist + totals
 });
 </script>
 </body>
