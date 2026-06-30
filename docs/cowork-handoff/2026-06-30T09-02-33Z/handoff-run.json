@@ -1,0 +1,54 @@
+{
+  "cowork_name": "kh.group:cowork",
+  "cowork_id": null,
+  "project": "kh.group",
+  "product": "STOX (+ www, brandmanual)",
+  "domain": "kh.group umbrella — repo KamilHrbacek/kh; co-steward of the kh-cowork toolkit",
+  "repository": "KamilHrbacek/kh",
+  "run_started_at_utc": "2026-06-30T09:02:33Z",
+  "run_finished_at_utc": "2026-06-30T09:18:35Z",
+  "prompt_version": "Universal KH Cowork Knowledge Handoff v1.0",
+  "prompt_reference": "docs/cowork-handoff/2026-06-30T09-02-33Z/prompt-used.md",
+  "files_created": [
+    "manifest.md",
+    "canonical-summary.md",
+    "operational-knowledge.md",
+    "architecture.md",
+    "current-state.md",
+    "risks-and-debt.md",
+    "recommended-contracts.md",
+    "academy-candidates.md",
+    "open-questions.md",
+    "needs-canonicalization.md",
+    "prompt-used.md",
+    "handoff-run.json"
+  ],
+  "registry_updated": true,
+  "registry_path": "docs/cowork-handoff/registry.jsonl",
+  "registry_note": "No central cross-lane registry exists; appended to per-repo jsonl + recommended a D1-backed registry as a future Marshall contract (needs-canonicalization #6).",
+  "pool_updated": true,
+  "pool_note": "Reflected on the agent-bus (D1 agent-bus 0bc68aa5) to marschall/all; no formal per-lane Pool structure exists for kh.group (board is www-flowsmith/backlog, project-tagged) — documented as a gap.",
+  "confidence": "HIGH on stox + CI + deploy; MEDIUM on lane identity and the KH-RBAC/access boundary (awaiting bus replies id 151/263/269).",
+  "summary": "kh.group cowork knowledge handoff. STOX: single-file dashboard, inline base + fail-safe khLive() overlay, all 8 data domains wired to /api Pages Functions; live ECB FX (Frankfurter); kh-stox D1 + fx_rates cislenik created (empty). www + brandmanual live. Top risks: stox publicly reachable with real data (ungated, only noindex), and no per-ticket preview URLs (CI main-only).",
+  "top_findings": [
+    "stox.kh.group serves REAL holdings but is only noindex — not access-gated (highest risk).",
+    "All 8 stox data domains wired through the fail-safe khLive() overlay; inline base never blanks.",
+    "Per-ticket preview URLs do not exist: CI deploys main only; ticket-NNN branches never deploy (raised on bus id 269).",
+    "Pages Functions only compile when wrangler runs from inside the app dir — the Phase-A blank-page root cause.",
+    "kh-stox D1 + fx_rates cislenik exist but are unpopulated/unbound; FX is live-fetched without history."
+  ],
+  "recommended_next_actions": [
+    "Gate stox via KH-RBAC + CF Access (KH hard-gate).",
+    "Populate fx_rates cislenik (ECB+CNB daily upserts), bind D1, /api/fx reads D1.",
+    "Fix per-ticket previews (CI deploys non-main as previews), standardise via cf-app-deploy.",
+    "Per-portfolio authZ: kh-stox members table read from CF-Access email header.",
+    "Modularise stox + converge the 3 copies of holdings data."
+  ],
+  "incomplete_items": [
+    "fx_rates cislenik not populated; D1 not bound to kh-stox Pages project.",
+    "stox not access-gated (manifest drafted, CF Access apply pending KH).",
+    "lane identity unconfirmed by Marschall (bus id 151).",
+    "per-ticket preview architecture fix awaiting team (bus id 269)."
+  ],
+  "secrets_read": false
+}
